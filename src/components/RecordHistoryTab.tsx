@@ -45,9 +45,10 @@ export const RecordHistoryTab = ({
         setError(null)
         const data = await getRecordHistory(albumTitle, artist, releaseYear)
         setHistory(data.history)
-      } catch (err) {
+      } catch (err: any) {
         setError(
-          'Não foi possível carregar a história. Tente novamente mais tarde.',
+          err.message ||
+            'Não foi possível carregar a história. Tente novamente mais tarde.',
         )
       } finally {
         setLoading(false)
