@@ -28,4 +28,36 @@ export type Database = {
   }
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+/**
+ * Custom fetch implementation to gracefully handle AbortError.
+ * When a fetch is aborted, it normally throws a DOMException.
+ * This can cause unhandled promise rejections in tests if not caught.
+ * This wrapper catches the AbortError and returns a mock error response
+ * that the Supabase client can handle gracefully, converting it into
+ * a resolved promise with an error object, instead of a rejected promise.
+ */
+const customFetch: typeof fetch = (input, init) => {
+  return fetch(input, init).catch((error) => {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.warn('Supabase request was aborted.')
+      const mockErrorResponse = {
+        message: 'The operation was aborted.',
+        details:
+          'This is a mock response to handle fetch AbortError gracefully.',
+        hint: '',
+        code: 'FETCH_ABORTED',
+      }
+      return new Response(JSON.stringify(mockErrorResponse), {
+        status: 400, // Using 400 to indicate a client-side error
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    throw error
+  })
+}
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: customFetch,
+  },
+})
