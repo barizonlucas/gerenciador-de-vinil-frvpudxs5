@@ -15,30 +15,6 @@ CREATE TABLE public.vinyl_records (
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Enable Row Level Security
-ALTER TABLE public.vinyl_records ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies
-CREATE POLICY "Allow users to see their own records"
-ON public.vinyl_records
-FOR SELECT
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Allow users to insert their own records"
-ON public.vinyl_records
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Allow users to update their own records"
-ON public.vinyl_records
-FOR UPDATE
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Allow users to delete their own records"
-ON public.vinyl_records
-FOR DELETE
-USING (auth.uid() = user_id);
-
 -- Function to update the updated_at column
 CREATE OR REPLACE FUNCTION handle_updated_at()
 RETURNS TRIGGER AS $$
