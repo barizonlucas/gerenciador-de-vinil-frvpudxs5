@@ -1,6 +1,5 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { useVinylCollection } from '@/hooks/use-vinyl-collection'
-import { VinylRecord } from '@/types/vinyl'
 
 type VinylCollectionContextType = ReturnType<typeof useVinylCollection>
 

@@ -1,79 +1,80 @@
 import { useState, useEffect, useCallback } from 'react'
 import { VinylRecord } from '@/types/vinyl'
-import {
-  getVinylRecords,
-  addVinylRecord,
-  updateVinylRecord,
-  deleteVinylRecord,
-} from '@/services/vinyl'
+import * as vinylService from '@/services/vinyl'
+import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
-import { useAuth } from './use-auth'
 
 export const useVinylCollection = () => {
-  const { user } = useAuth()
   const [records, setRecords] = useState<VinylRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const { session } = useAuth()
 
   const fetchRecords = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const { data, error } = await getVinylRecords()
-    if (error) {
-      toast.error('Falha ao buscar os discos.', {
-        description: error.message,
-      })
+    if (!session) {
       setRecords([])
-    } else {
-      setRecords(data as VinylRecord[])
+      setLoading(false)
+      return
     }
-    setLoading(false)
-  }, [user])
+    setLoading(true)
+    try {
+      const data = await vinylService.getRecords()
+      setRecords(data)
+    } catch (error) {
+      toast.error('Erro ao buscar os discos.')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }, [session])
 
   useEffect(() => {
     fetchRecords()
   }, [fetchRecords])
 
-  const addRecord = async (record: Omit<VinylRecord, 'id' | 'user_id'>) => {
-    if (!user) {
-      toast.error('Você precisa estar logado para adicionar um disco.')
-      return
-    }
-    const { data: newRecord, error } = await addVinylRecord(record, user.id)
-    if (error) {
-      toast.error('Falha ao adicionar o disco.', {
-        description: error.message,
-      })
-    } else if (newRecord) {
-      setRecords((prev) => [newRecord as VinylRecord, ...prev])
-      toast.success('Disco adicionado com sucesso!')
+  const addRecord = async (recordData: Omit<VinylRecord, 'id'>) => {
+    try {
+      const newRecord = await vinylService.addRecord(recordData)
+      setRecords((prev) => [newRecord, ...prev])
+      toast.success(`"${newRecord.albumTitle}" adicionado com sucesso!`)
+    } catch (error) {
+      toast.error('Erro ao adicionar o disco.')
+      console.error(error)
     }
   }
 
-  const updateRecord = async (record: VinylRecord) => {
-    const { data: updatedRecord, error } = await updateVinylRecord(record)
-    if (error) {
-      toast.error('Falha ao atualizar o disco.', {
-        description: error.message,
-      })
-    } else if (updatedRecord) {
+  const updateRecord = async (updatedRecord: VinylRecord) => {
+    try {
+      const returnedRecord = await vinylService.updateRecord(updatedRecord)
       setRecords((prev) =>
-        prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)),
+        prev.map((r) => (r.id === returnedRecord.id ? returnedRecord : r)),
       )
-      toast.success('Disco atualizado com sucesso!')
+      toast.success(`"${returnedRecord.albumTitle}" atualizado com sucesso!`)
+    } catch (error) {
+      toast.error('Erro ao atualizar o disco.')
+      console.error(error)
     }
   }
 
   const deleteRecord = async (id: string) => {
-    const { error } = await deleteVinylRecord(id)
-    if (error) {
-      toast.error('Falha ao excluir o disco.', {
-        description: error.message,
-      })
-    } else {
+    const recordToDelete = records.find((r) => r.id === id)
+    try {
+      await vinylService.deleteRecord(id)
       setRecords((prev) => prev.filter((r) => r.id !== id))
-      toast.success('Disco excluído com sucesso!')
+      if (recordToDelete) {
+        toast.success(`"${recordToDelete.albumTitle}" excluído com sucesso!`)
+      }
+    } catch (error) {
+      toast.error('Erro ao excluir o disco.')
+      console.error(error)
     }
   }
 
-  return { records, loading, addRecord, updateRecord, deleteRecord }
+  return {
+    records,
+    loading,
+    addRecord,
+    updateRecord,
+    deleteRecord,
+    refetch: fetchRecords,
+  }
 }

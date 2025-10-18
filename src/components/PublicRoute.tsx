@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export const ProtectedRoute = () => {
+export const PublicRoute = () => {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -17,5 +17,5 @@ export const ProtectedRoute = () => {
     )
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />
+  return user ? <Navigate to="/" replace /> : <Outlet />
 }
