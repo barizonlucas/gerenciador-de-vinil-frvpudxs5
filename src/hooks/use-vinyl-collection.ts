@@ -1,109 +1,108 @@
 import { useState, useEffect, useCallback } from 'react'
 import { VinylRecord } from '@/types/vinyl'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { v4 as uuidv4 } from 'uuid'
 
-const STORAGE_KEY = 'vinylCollection'
-
-const initialData: VinylRecord[] = [
-  {
-    id: '1',
-    albumTitle: 'The Dark Side of the Moon',
-    artist: 'Pink Floyd',
-    releaseYear: 1973,
-    genre: 'Progressive Rock',
-    coverArtUrl:
-      'https://img.usecurling.com/p/500/500?q=dark%20side%20of%20the%20moon',
-    condition: 'Excelente',
-  },
-  {
-    id: '2',
-    albumTitle: 'Abbey Road',
-    artist: 'The Beatles',
-    releaseYear: 1969,
-    genre: 'Rock',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=abbey%20road',
-    condition: 'Bom',
-  },
-  {
-    id: '3',
-    albumTitle: 'Rumours',
-    artist: 'Fleetwood Mac',
-    releaseYear: 1977,
-    genre: 'Rock',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=rumours%20album',
-    condition: 'Novo',
-  },
-  {
-    id: '4',
-    albumTitle: 'Kind of Blue',
-    artist: 'Miles Davis',
-    releaseYear: 1959,
-    genre: 'Jazz',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=kind%20of%20blue',
-    condition: 'Regular',
-  },
-]
-
-export function useVinylCollection() {
+export const useVinylCollection = () => {
   const [records, setRecords] = useState<VinylRecord[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchRecords = useCallback(async () => {
+    setLoading(true)
     try {
-      const storedRecords = localStorage.getItem(STORAGE_KEY)
-      if (storedRecords) {
-        setRecords(JSON.parse(storedRecords))
-      } else {
-        setRecords(initialData)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData))
+      const { data, error } = await supabase
+        .from('vinyl_records')
+        .select('*')
+        .order('albumTitle', { ascending: true })
+
+      if (error) {
+        throw error
       }
+      setRecords(data || [])
     } catch (error) {
-      console.error('Failed to load records from local storage', error)
-      toast.error('Não foi possível carregar a coleção.')
-      setRecords(initialData)
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      toast.error('Falha ao buscar discos.', { description: message })
     } finally {
       setLoading(false)
     }
   }, [])
 
-  const updateLocalStorage = (updatedRecords: VinylRecord[]) => {
+  useEffect(() => {
+    fetchRecords()
+  }, [fetchRecords])
+
+  const addRecord = async (recordData: Omit<VinylRecord, 'id'>) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords))
+      const newRecord = { ...recordData, id: uuidv4() }
+      const { data, error } = await supabase
+        .from('vinyl_records')
+        .insert(newRecord)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setRecords((prev) =>
+          [...prev, data].sort((a, b) =>
+            a.albumTitle.localeCompare(b.albumTitle),
+          ),
+        )
+        toast.success(`"${data.albumTitle}" foi adicionado à coleção!`)
+      }
     } catch (error) {
-      console.error('Failed to save records to local storage', error)
-      toast.error('Não foi possível salvar as alterações.')
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      toast.error('Falha ao adicionar disco.', { description: message })
     }
   }
 
-  const addRecord = useCallback((record: Omit<VinylRecord, 'id'>) => {
-    setRecords((prevRecords) => {
-      const newRecord = { ...record, id: crypto.randomUUID() }
-      const updatedRecords = [...prevRecords, newRecord]
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco adicionado com sucesso!')
-      return updatedRecords
-    })
-  }, [])
+  const updateRecord = async (updatedRecord: VinylRecord) => {
+    try {
+      const { data, error } = await supabase
+        .from('vinyl_records')
+        .update(updatedRecord)
+        .eq('id', updatedRecord.id)
+        .select()
+        .single()
 
-  const updateRecord = useCallback((updatedRecord: VinylRecord) => {
-    setRecords((prevRecords) => {
-      const updatedRecords = prevRecords.map((record) =>
-        record.id === updatedRecord.id ? updatedRecord : record,
-      )
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco atualizado!')
-      return updatedRecords
-    })
-  }, [])
+      if (error) throw error
 
-  const deleteRecord = useCallback((id: string) => {
-    setRecords((prevRecords) => {
-      const updatedRecords = prevRecords.filter((record) => record.id !== id)
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco excluído!')
-      return updatedRecords
-    })
-  }, [])
+      if (data) {
+        setRecords((prev) => prev.map((r) => (r.id === data.id ? data : r)))
+        toast.success(`"${data.albumTitle}" foi atualizado.`)
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      toast.error('Falha ao atualizar disco.', { description: message })
+    }
+  }
 
-  return { records, loading, addRecord, updateRecord, deleteRecord, setRecords }
+  const deleteRecord = async (id: string) => {
+    // Optimistically find the record to show its name in the toast
+    const recordToDelete = records.find((r) => r.id === id)
+
+    try {
+      const { error } = await supabase
+        .from('vinyl_records')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setRecords((prev) => prev.filter((r) => r.id !== id))
+      if (recordToDelete) {
+        toast.success(`"${recordToDelete.albumTitle}" foi excluído.`)
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      toast.error('Falha ao excluir disco.', { description: message })
+    }
+  }
+
+  return { records, loading, addRecord, updateRecord, deleteRecord }
 }
