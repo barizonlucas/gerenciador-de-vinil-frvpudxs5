@@ -1,13 +1,29 @@
-/* Layout Component - A component that wraps the main content of the app
-   - Use this file to add a header, footer, or other elements that should be present on every page
-   - This component is used in the App.tsx file to wrap the main content of the app */
-
 import { Outlet } from 'react-router-dom'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
+import { useState } from 'react'
+import { AddRecordModal } from '@/components/modals/AddRecordModal'
+import { useVinylContext } from '@/contexts/VinylCollectionContext'
 
 export default function Layout() {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const { addRecord } = useVinylContext()
+
   return (
-    <main className="flex flex-col min-h-screen">
-      <Outlet />
-    </main>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header onAddRecord={() => setIsAddModalOpen(true)} />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+      <AddRecordModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddRecord={(record) => {
+          addRecord(record)
+          setIsAddModalOpen(false)
+        }}
+      />
+    </div>
   )
 }
