@@ -1,5 +1,5 @@
--- Create the vinyl_records table
-CREATE TABLE public.vinyl_records (
+-- Create the vinyl_records table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.vinyl_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     "albumTitle" TEXT NOT NULL,
@@ -24,7 +24,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to automatically update the updated_at timestamp
+-- Drop the trigger if it exists, then create it
+DROP TRIGGER IF EXISTS on_vinyl_records_updated ON public.vinyl_records;
 CREATE TRIGGER on_vinyl_records_updated
 BEFORE UPDATE ON public.vinyl_records
 FOR EACH ROW
