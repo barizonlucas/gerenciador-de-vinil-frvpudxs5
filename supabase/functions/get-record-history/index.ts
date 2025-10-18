@@ -1,12 +1,23 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+const GEMINI_API_KEY = Deno.env.get('gemini')
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (!GEMINI_API_KEY) {
+    console.error('Missing Gemini API key secret.')
+    return new Response(
+      JSON.stringify({ error: 'AI service is not configured.' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
   }
 
   try {
