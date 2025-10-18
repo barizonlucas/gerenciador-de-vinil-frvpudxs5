@@ -23,4 +23,12 @@ export const getRecordHistory = async (
     throw new Error(error.message || 'Falha ao invocar a função de histórico.')
   }
 
-  // Hand
+  // Handle application-level error returned from the function
+  if (data.error) {
+    console.error('Error from get-record-history function:', data.error)
+    // The function returns a specific error message in the 'error' property
+    throw new Error(data.error)
+  }
+
+  return data
+}
