@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DiscAlbum } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { RecordHistoryTab } from '@/components/RecordHistoryTab'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -47,59 +49,76 @@ export const ViewRecordModal = ({
           <DialogTitle className="text-2xl">{record.albumTitle}</DialogTitle>
           <DialogDescription>{record.artist}</DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-6 py-4">
-          <div className="col-span-1">
-            {record.coverArtUrl ? (
-              <img
-                src={record.coverArtUrl}
-                alt={record.albumTitle}
-                className="w-full rounded-lg object-cover aspect-square"
-              />
-            ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-secondary">
-                <DiscAlbum className="h-16 w-16 text-border" />
+
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="history">História</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details">
+            <div className="grid grid-cols-3 gap-6 py-4">
+              <div className="col-span-1">
+                {record.coverArtUrl ? (
+                  <img
+                    src={record.coverArtUrl}
+                    alt={record.albumTitle}
+                    className="w-full rounded-lg object-cover aspect-square"
+                  />
+                ) : (
+                  <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-secondary">
+                    <DiscAlbum className="h-16 w-16 text-border" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className="col-span-2 space-y-3 text-sm">
-            <p>
-              <strong>Ano:</strong> {record.releaseYear || 'N/A'}
-            </p>
-            <p>
-              <strong>Gênero:</strong> {record.genre || 'N/A'}
-            </p>
-            <p>
-              <strong>Condição:</strong>{' '}
-              {record.condition ? (
-                <Badge variant="secondary">{record.condition}</Badge>
-              ) : (
-                'N/A'
-              )}
-            </p>
-            <p>
-              <strong>Data da Compra:</strong>{' '}
-              {record.purchaseDate
-                ? format(
-                    parseISO(record.purchaseDate),
-                    "dd 'de' MMMM 'de' yyyy",
-                    { locale: ptBR },
-                  )
-                : 'N/A'}
-            </p>
-            <p>
-              <strong>Preço:</strong>{' '}
-              {record.price
-                ? `R$ ${record.price.toFixed(2).replace('.', ',')}`
-                : 'N/A'}
-            </p>
-            {record.notes && (
-              <div className="pt-2">
-                <strong>Observações:</strong>
-                <p className="text-muted-foreground">{record.notes}</p>
+              <div className="col-span-2 space-y-3 text-sm">
+                <p>
+                  <strong>Ano:</strong> {record.releaseYear || 'N/A'}
+                </p>
+                <p>
+                  <strong>Gênero:</strong> {record.genre || 'N/A'}
+                </p>
+                <p>
+                  <strong>Condição:</strong>{' '}
+                  {record.condition ? (
+                    <Badge variant="secondary">{record.condition}</Badge>
+                  ) : (
+                    'N/A'
+                  )}
+                </p>
+                <p>
+                  <strong>Data da Compra:</strong>{' '}
+                  {record.purchaseDate
+                    ? format(
+                        parseISO(record.purchaseDate),
+                        "dd 'de' MMMM 'de' yyyy",
+                        { locale: ptBR },
+                      )
+                    : 'N/A'}
+                </p>
+                <p>
+                  <strong>Preço:</strong>{' '}
+                  {record.price
+                    ? `R$ ${record.price.toFixed(2).replace('.', ',')}`
+                    : 'N/A'}
+                </p>
+                {record.notes && (
+                  <div className="pt-2">
+                    <strong>Observações:</strong>
+                    <p className="text-muted-foreground">{record.notes}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="history">
+            <RecordHistoryTab
+              albumTitle={record.albumTitle}
+              artist={record.artist}
+              releaseYear={record.releaseYear}
+            />
+          </TabsContent>
+        </Tabs>
+
         <DialogFooter className="gap-2 sm:justify-end pt-4">
           <Button
             variant="outline"
