@@ -45,7 +45,7 @@ const formSchema = z.object({
 type RecordFormValues = z.infer<typeof formSchema>
 
 interface RecordFormProps {
-  onSubmit: (data: Omit<VinylRecord, 'id'>) => void
+  onSubmit: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void
   onCancel: () => void
   initialData?: VinylRecord
   submitButtonText: string

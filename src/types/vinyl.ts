@@ -1,5 +1,6 @@
 export interface VinylRecord {
   id: string // UUID único
+  user_id: string // Foreign key to auth.users
   albumTitle: string // Título do Álbum (obrigatório)
   artist: string // Artista (obrigatório)
   releaseYear?: number // Ano de Lançamento (opcional, 4 dígitos)

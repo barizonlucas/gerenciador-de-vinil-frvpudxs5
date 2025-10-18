@@ -1,109 +1,79 @@
 import { useState, useEffect, useCallback } from 'react'
 import { VinylRecord } from '@/types/vinyl'
+import {
+  getVinylRecords,
+  addVinylRecord,
+  updateVinylRecord,
+  deleteVinylRecord,
+} from '@/services/vinyl'
 import { toast } from 'sonner'
+import { useAuth } from './use-auth'
 
-const STORAGE_KEY = 'vinylCollection'
-
-const initialData: VinylRecord[] = [
-  {
-    id: '1',
-    albumTitle: 'The Dark Side of the Moon',
-    artist: 'Pink Floyd',
-    releaseYear: 1973,
-    genre: 'Progressive Rock',
-    coverArtUrl:
-      'https://img.usecurling.com/p/500/500?q=dark%20side%20of%20the%20moon',
-    condition: 'Excelente',
-  },
-  {
-    id: '2',
-    albumTitle: 'Abbey Road',
-    artist: 'The Beatles',
-    releaseYear: 1969,
-    genre: 'Rock',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=abbey%20road',
-    condition: 'Bom',
-  },
-  {
-    id: '3',
-    albumTitle: 'Rumours',
-    artist: 'Fleetwood Mac',
-    releaseYear: 1977,
-    genre: 'Rock',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=rumours%20album',
-    condition: 'Novo',
-  },
-  {
-    id: '4',
-    albumTitle: 'Kind of Blue',
-    artist: 'Miles Davis',
-    releaseYear: 1959,
-    genre: 'Jazz',
-    coverArtUrl: 'https://img.usecurling.com/p/500/500?q=kind%20of%20blue',
-    condition: 'Regular',
-  },
-]
-
-export function useVinylCollection() {
+export const useVinylCollection = () => {
+  const { user } = useAuth()
   const [records, setRecords] = useState<VinylRecord[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    try {
-      const storedRecords = localStorage.getItem(STORAGE_KEY)
-      if (storedRecords) {
-        setRecords(JSON.parse(storedRecords))
-      } else {
-        setRecords(initialData)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData))
-      }
-    } catch (error) {
-      console.error('Failed to load records from local storage', error)
-      toast.error('Não foi possível carregar a coleção.')
-      setRecords(initialData)
-    } finally {
-      setLoading(false)
+  const fetchRecords = useCallback(async () => {
+    if (!user) return
+    setLoading(true)
+    const { data, error } = await getVinylRecords()
+    if (error) {
+      toast.error('Falha ao buscar os discos.', {
+        description: error.message,
+      })
+      setRecords([])
+    } else {
+      setRecords(data as VinylRecord[])
     }
-  }, [])
+    setLoading(false)
+  }, [user])
 
-  const updateLocalStorage = (updatedRecords: VinylRecord[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords))
-    } catch (error) {
-      console.error('Failed to save records to local storage', error)
-      toast.error('Não foi possível salvar as alterações.')
+  useEffect(() => {
+    fetchRecords()
+  }, [fetchRecords])
+
+  const addRecord = async (record: Omit<VinylRecord, 'id' | 'user_id'>) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar um disco.')
+      return
+    }
+    const { data: newRecord, error } = await addVinylRecord(record, user.id)
+    if (error) {
+      toast.error('Falha ao adicionar o disco.', {
+        description: error.message,
+      })
+    } else if (newRecord) {
+      setRecords((prev) => [newRecord as VinylRecord, ...prev])
+      toast.success('Disco adicionado com sucesso!')
     }
   }
 
-  const addRecord = useCallback((record: Omit<VinylRecord, 'id'>) => {
-    setRecords((prevRecords) => {
-      const newRecord = { ...record, id: crypto.randomUUID() }
-      const updatedRecords = [...prevRecords, newRecord]
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco adicionado com sucesso!')
-      return updatedRecords
-    })
-  }, [])
-
-  const updateRecord = useCallback((updatedRecord: VinylRecord) => {
-    setRecords((prevRecords) => {
-      const updatedRecords = prevRecords.map((record) =>
-        record.id === updatedRecord.id ? updatedRecord : record,
+  const updateRecord = async (record: VinylRecord) => {
+    const { data: updatedRecord, error } = await updateVinylRecord(record)
+    if (error) {
+      toast.error('Falha ao atualizar o disco.', {
+        description: error.message,
+      })
+    } else if (updatedRecord) {
+      setRecords((prev) =>
+        prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)),
       )
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco atualizado!')
-      return updatedRecords
-    })
-  }, [])
+      toast.success('Disco atualizado com sucesso!')
+    }
+  }
 
-  const deleteRecord = useCallback((id: string) => {
-    setRecords((prevRecords) => {
-      const updatedRecords = prevRecords.filter((record) => record.id !== id)
-      updateLocalStorage(updatedRecords)
-      toast.success('Disco excluído!')
-      return updatedRecords
-    })
-  }, [])
+  const deleteRecord = async (id: string) => {
+    const { error } = await deleteVinylRecord(id)
+    if (error) {
+      toast.error('Falha ao excluir o disco.', {
+        description: error.message,
+      })
+    } else {
+      setRecords((prev) => prev.filter((r) => r.id !== id))
+      toast.success('Disco excluído com sucesso!')
+    }
+  }
 
-  return { records, loading, addRecord, updateRecord, deleteRecord, setRecords }
+  return { records, loading, addRecord, updateRecord, deleteRecord }
 }

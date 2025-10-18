@@ -23,8 +23,8 @@ export const EditRecordModal = ({
 }: EditRecordModalProps) => {
   if (!record) return null
 
-  const handleSubmit = (data: Omit<VinylRecord, 'id'>) => {
-    onUpdateRecord({ ...data, id: record.id })
+  const handleSubmit = (data: Omit<VinylRecord, 'id' | 'user_id'>) => {
+    onUpdateRecord({ ...data, id: record.id, user_id: record.user_id })
   }
 
   return (
