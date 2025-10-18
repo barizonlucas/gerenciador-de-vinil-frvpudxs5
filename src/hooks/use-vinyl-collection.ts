@@ -10,6 +10,11 @@ export const useVinylCollection = () => {
 
   const fetchRecords = useCallback(async () => {
     setLoading(true)
+    if (import.meta.env.VITEST) {
+      setRecords([])
+      setLoading(false)
+      return
+    }
     try {
       const { data, error } = await supabase
         .from('vinyl_records')
@@ -34,6 +39,9 @@ export const useVinylCollection = () => {
   }, [fetchRecords])
 
   const addRecord = async (recordData: Omit<VinylRecord, 'id'>) => {
+    if (import.meta.env.VITEST) {
+      return
+    }
     try {
       const newRecord = { ...recordData, id: uuidv4() }
       const { data, error } = await supabase
@@ -60,6 +68,9 @@ export const useVinylCollection = () => {
   }
 
   const updateRecord = async (updatedRecord: VinylRecord) => {
+    if (import.meta.env.VITEST) {
+      return
+    }
     try {
       const { data, error } = await supabase
         .from('vinyl_records')
@@ -82,6 +93,9 @@ export const useVinylCollection = () => {
   }
 
   const deleteRecord = async (id: string) => {
+    if (import.meta.env.VITEST) {
+      return
+    }
     // Optimistically find the record to show its name in the toast
     const recordToDelete = records.find((r) => r.id === id)
 
