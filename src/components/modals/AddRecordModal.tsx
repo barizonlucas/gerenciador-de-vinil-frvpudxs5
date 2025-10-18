@@ -11,7 +11,7 @@ import { VinylRecord } from '@/types/vinyl'
 interface AddRecordModalProps {
   isOpen: boolean
   onClose: () => void
-  onAddRecord: (data: Omit<VinylRecord, 'id'>) => void
+  onAddRecord: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void
 }
 
 export const AddRecordModal = ({

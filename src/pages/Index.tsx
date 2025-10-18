@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
 import { RecordCard } from '@/components/RecordCard'
 import { Input } from '@/components/ui/input'
@@ -9,8 +9,12 @@ import { EditRecordModal } from '@/components/modals/EditRecordModal'
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/hooks/use-auth'
+import { useNavigate } from 'react-router-dom'
 
 const Index = () => {
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const { records, loading, updateRecord, deleteRecord } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
   const [modalState, setModalState] = useState<{
@@ -18,6 +22,12 @@ const Index = () => {
     edit: VinylRecord | null
     delete: VinylRecord | null
   }>({ view: null, edit: null, delete: null })
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth')
+    }
+  }, [user, authLoading, navigate])
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return records

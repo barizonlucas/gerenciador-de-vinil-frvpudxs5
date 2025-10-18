@@ -1,120 +1,77 @@
 import { useState, useEffect, useCallback } from 'react'
 import { VinylRecord } from '@/types/vinyl'
-import { supabase } from '@/lib/supabase'
+import {
+  getVinylRecords,
+  addVinylRecord,
+  updateVinylRecord,
+  deleteVinylRecord,
+} from '@/services/vinyl'
 import { toast } from 'sonner'
-import { v4 as uuidv4 } from 'uuid'
+import { useAuth } from './use-auth'
 
 export const useVinylCollection = () => {
+  const { user } = useAuth()
   const [records, setRecords] = useState<VinylRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchRecords = useCallback(async () => {
+    if (!user) return
     setLoading(true)
-    if (import.meta.env.VITEST) {
+    const { data, error } = await getVinylRecords()
+    if (error) {
+      toast.error('Falha ao buscar os discos.', {
+        description: error.message,
+      })
       setRecords([])
-      setLoading(false)
-      return
+    } else {
+      setRecords(data as VinylRecord[])
     }
-    try {
-      const { data, error } = await supabase
-        .from('vinyl_records')
-        .select('*')
-        .order('albumTitle', { ascending: true })
-
-      if (error) {
-        throw error
-      }
-      setRecords(data || [])
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred'
-      toast.error('Falha ao buscar discos.', { description: message })
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    setLoading(false)
+  }, [user])
 
   useEffect(() => {
     fetchRecords()
   }, [fetchRecords])
 
-  const addRecord = async (recordData: Omit<VinylRecord, 'id'>) => {
-    if (import.meta.env.VITEST) {
+  const addRecord = async (record: Omit<VinylRecord, 'id' | 'user_id'>) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar um disco.')
       return
     }
-    try {
-      const newRecord = { ...recordData, id: uuidv4() }
-      const { data, error } = await supabase
-        .from('vinyl_records')
-        .insert(newRecord)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setRecords((prev) =>
-          [...prev, data].sort((a, b) =>
-            a.albumTitle.localeCompare(b.albumTitle),
-          ),
-        )
-        toast.success(`"${data.albumTitle}" foi adicionado à coleção!`)
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred'
-      toast.error('Falha ao adicionar disco.', { description: message })
+    const { data: newRecord, error } = await addVinylRecord(record, user.id)
+    if (error) {
+      toast.error('Falha ao adicionar o disco.', {
+        description: error.message,
+      })
+    } else if (newRecord) {
+      setRecords((prev) => [newRecord as VinylRecord, ...prev])
+      toast.success('Disco adicionado com sucesso!')
     }
   }
 
-  const updateRecord = async (updatedRecord: VinylRecord) => {
-    if (import.meta.env.VITEST) {
-      return
-    }
-    try {
-      const { data, error } = await supabase
-        .from('vinyl_records')
-        .update(updatedRecord)
-        .eq('id', updatedRecord.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setRecords((prev) => prev.map((r) => (r.id === data.id ? data : r)))
-        toast.success(`"${data.albumTitle}" foi atualizado.`)
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred'
-      toast.error('Falha ao atualizar disco.', { description: message })
+  const updateRecord = async (record: VinylRecord) => {
+    const { data: updatedRecord, error } = await updateVinylRecord(record)
+    if (error) {
+      toast.error('Falha ao atualizar o disco.', {
+        description: error.message,
+      })
+    } else if (updatedRecord) {
+      setRecords((prev) =>
+        prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)),
+      )
+      toast.success('Disco atualizado com sucesso!')
     }
   }
 
   const deleteRecord = async (id: string) => {
-    if (import.meta.env.VITEST) {
-      return
-    }
-    // Optimistically find the record to show its name in the toast
-    const recordToDelete = records.find((r) => r.id === id)
-
-    try {
-      const { error } = await supabase
-        .from('vinyl_records')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
+    const { error } = await deleteVinylRecord(id)
+    if (error) {
+      toast.error('Falha ao excluir o disco.', {
+        description: error.message,
+      })
+    } else {
       setRecords((prev) => prev.filter((r) => r.id !== id))
-      if (recordToDelete) {
-        toast.success(`"${recordToDelete.albumTitle}" foi excluído.`)
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred'
-      toast.error('Falha ao excluir disco.', { description: message })
+      toast.success('Disco excluído com sucesso!')
     }
   }
 
