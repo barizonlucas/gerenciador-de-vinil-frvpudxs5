@@ -1,6 +1,12 @@
 -- Enable Row Level Security for the vinyl_records table
 ALTER TABLE public.vinyl_records ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist to ensure idempotency
+DROP POLICY IF EXISTS "Allow users to view their own records" ON public.vinyl_records;
+DROP POLICY IF EXISTS "Allow users to insert their own records" ON public.vinyl_records;
+DROP POLICY IF EXISTS "Allow users to update their own records" ON public.vinyl_records;
+DROP POLICY IF EXISTS "Allow users to delete their own records" ON public.vinyl_records;
+
 -- Create a policy that allows users to view their own records
 CREATE POLICY "Allow users to view their own records"
 ON public.vinyl_records
