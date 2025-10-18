@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,31 +11,24 @@ import {
 } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { DiscAlbum } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLogin, setIsLogin] = useState(true)
+  const { signIn, signUp } = useAuth()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await signIn(email, password)
       if (error) toast.error(error.message)
     } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      })
+      const { error } = await signUp(email, password)
       if (error) {
         toast.error(error.message)
       } else {

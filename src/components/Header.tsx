@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { DiscAlbum, Plus, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase/client'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +15,10 @@ interface HeaderProps {
 }
 
 export const Header = ({ onAddRecord }: HeaderProps) => {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut()
   }
 
   const getInitials = (email: string) => {
