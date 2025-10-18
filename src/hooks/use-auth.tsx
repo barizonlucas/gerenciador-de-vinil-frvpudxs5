@@ -51,12 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     })
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
     return () => subscription.unsubscribe()
   }, [navigate])
 
@@ -82,9 +76,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
-    if (!error) {
-      navigate('/auth')
-    }
     return { error }
   }
 
