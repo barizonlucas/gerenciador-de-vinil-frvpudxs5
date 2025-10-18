@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { getRecordHistory } from '@/services/history'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Terminal } from 'lucide-react'
+import { Terminal, UserX } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface RecordHistoryTabProps {
   albumTitle: string
@@ -15,11 +16,23 @@ export const RecordHistoryTab = ({
   artist,
   releaseYear,
 }: RecordHistoryTabProps) => {
+  const { user, loading: authLoading } = useAuth()
   const [history, setHistory] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
+
+    if (!user) {
+      setError('Autenticação necessária para ver o histórico.')
+      setLoading(false)
+      return
+    }
+
     if (!releaseYear) {
       setError('Ano de lançamento não disponível para gerar a história.')
       setLoading(false)
@@ -42,9 +55,9 @@ export const RecordHistoryTab = ({
     }
 
     fetchHistory()
-  }, [albumTitle, artist, releaseYear])
+  }, [albumTitle, artist, releaseYear, user, authLoading])
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="space-y-4 py-4">
         <Skeleton className="h-4 w-full" />
@@ -63,7 +76,11 @@ export const RecordHistoryTab = ({
     return (
       <div className="py-4">
         <Alert variant="destructive">
-          <Terminal className="h-4 w-4" />
+          {error === 'Autenticação necessária para ver o histórico.' ? (
+            <UserX className="h-4 w-4" />
+          ) : (
+            <Terminal className="h-4 w-4" />
+          )}
           <AlertTitle>Erro</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
