@@ -9,7 +9,7 @@ import { EditRecordModal } from '@/components/modals/EditRecordModal'
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const Index = () => {
@@ -25,7 +25,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/auth')
+      navigate('/login')
     }
   }, [user, authLoading, navigate])
 
