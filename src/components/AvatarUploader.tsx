@@ -18,9 +18,14 @@ export const AvatarUploader = () => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (file.size > 1024 * 1024 * 2) {
-      // 2MB limit
-      toast.error('O arquivo é muito grande. O limite é de 2MB.')
+    if (file.size > 1024 * 1024 * 50) {
+      // 50MB limit
+      toast.error('O arquivo é muito grande. O limite é de 50MB.')
+      return
+    }
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      toast.error('Tipo de arquivo inválido. Apenas JPEG e PNG são permitidos.')
       return
     }
 

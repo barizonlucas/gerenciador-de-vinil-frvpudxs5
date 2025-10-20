@@ -1,13 +1,19 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from '@supabase/supabase-js'
 import { S3Client } from 's3_lite_client'
+import { Image } from 'imagescript'
 import { corsHeaders } from '../_shared/cors.ts'
 
+// Constants
 const S3_ENDPOINT = Deno.env.get('S3_ENDPOINT')!
 const S3_ACCESS_KEY_ID = Deno.env.get('S3_ACCESS_KEY_ID')!
 const S3_SECRET_ACCESS_KEY = Deno.env.get('S3_SECRET_ACCESS_KEY')!
 const S3_BUCKET_NAME = Deno.env.get('S3_BUCKET_NAME')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
+const AVATAR_DIMENSION = 256
 
 const s3EndpointHost = S3_ENDPOINT
   ? new URL(S3_ENDPOINT).hostname
@@ -60,11 +66,40 @@ Deno.serve(async (req) => {
       })
     }
 
-    const fileExt = file.name.split('.').pop()
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid file type. Only JPEG and PNG are allowed.',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      )
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'File size exceeds 50MB limit.' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      )
+    }
+
+    const buffer = await file.arrayBuffer()
+    const image = await Image.decode(buffer)
+
+    image.resize(AVATAR_DIMENSION, Image.RESIZE_AUTO)
+
+    const optimizedBuffer = await image.encodeJPEG(80)
+
+    const fileExt = 'jpeg'
     const filePath = `${user.id}/${Date.now()}.${fileExt}`
 
-    await s3Client.putObject(filePath, await file.arrayBuffer(), {
-      'Content-Type': file.type,
+    await s3Client.putObject(filePath, optimizedBuffer, {
+      'Content-Type': 'image/jpeg',
     })
 
     const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${S3_BUCKET_NAME}/${filePath}`
