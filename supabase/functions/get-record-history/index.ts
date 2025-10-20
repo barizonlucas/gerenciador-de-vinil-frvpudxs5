@@ -1,13 +1,26 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { corsHeaders } from '../_shared/cors.ts'
 
 const GEMINI_API_KEY = Deno.env.get('gemini')
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
 
-Deno.serve(async (req) => {
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+// Handle CORS preflight requests
+const handleCors = (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+}
+
+Deno.serve(async (req) => {
+  // Handle CORS
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   if (!GEMINI_API_KEY) {
     console.error('Missing Gemini API key secret.')
@@ -39,7 +52,9 @@ Deno.serve(async (req) => {
       )
     }
 
-    const prompt = `Conte a história do álbum "${albumTitle}" de ${artist}, lançado em ${releaseYear}. Fale sobre a concepção do disco, o momento da banda/artista na época, e o contexto histórico e cultural, tanto global quanto no Brasil, se relevante. A resposta deve ser um texto narrativo e informativo em português do Brasil, com no mínimo 3 parágrafos.`
+    const prompt = `Como historiador musical, resuma brevemente a história do álbum "${albumTitle}" de ${artist} (${releaseYear}). 
+    Foque nos fatos mais importantes sobre o disco e seu impacto.
+    Responda em português do Brasil em 2 parágrafos concisos.`
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
       method: 'POST',

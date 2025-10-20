@@ -13,7 +13,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DiscAlbum } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { RecordHistoryTab } from '@/components/RecordHistoryTab'
+import { RecordModal } from '@/components/RecordModal'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -111,11 +111,8 @@ export const ViewRecordModal = ({
             </div>
           </TabsContent>
           <TabsContent value="history">
-            <RecordHistoryTab
-              albumTitle={record.albumTitle}
-              artist={record.artist}
-              releaseYear={record.releaseYear}
-            />
+            {/* agora usamos o modal único que já carrega detalhes + história */}
+            <RecordModal record={record} isOpen={isOpen} onClose={handleClose} />
           </TabsContent>
         </Tabs>
 
