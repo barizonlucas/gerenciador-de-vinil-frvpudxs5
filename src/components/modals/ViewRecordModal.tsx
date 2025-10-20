@@ -112,7 +112,11 @@ export const ViewRecordModal = ({
           </TabsContent>
           <TabsContent value="history">
             {/* agora usamos o modal único que já carrega detalhes + história */}
-            <RecordModal record={record} isOpen={isOpen} onClose={handleClose} />
+            <RecordModal
+              record={record}
+              isOpen={isOpen}
+              onClose={handleClose}
+            />
           </TabsContent>
         </Tabs>
 

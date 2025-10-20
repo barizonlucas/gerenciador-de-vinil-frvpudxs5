@@ -1,6 +1,5 @@
 /* Vite config for building the frontend react app: https://vite.dev/config/ */
 import { defineConfig } from 'vite'
-import { config } from 'dotenv';
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -9,28 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '::',
     port: 8080,
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 24678,
-      clientPort: 24678,
-      timeout: 1000
-    },
-    proxy: {
-      '/skip-config': {
-        target: 'https://api.goskip.dev',
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/skip-config/, '/v1/projects/localhost/config/public')
-      },
-      // encaminha /functions/* para a Edge Function em produção, evitando CORS no dev
-      '/functions': {
-        target: 'https://cackmzlupxtgtgyljjqy.supabase.co',
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/functions/, '/functions')
-      }
-    }
   },
   experimental: {
     enableNativePlugin: true
@@ -57,7 +34,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   test: {
-    environment: 'node',
-    setupFiles: ['./tests/setup.ts']
-  }
+    environment: 'happy-dom',
+    globals: true,
+  },
 }))

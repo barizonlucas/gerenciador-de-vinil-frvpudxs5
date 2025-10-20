@@ -1,14 +1,14 @@
 interface RecordDetailsProps {
   record: {
-    artist: string;
-    album: string;
-    year: number;
-    genre?: string;
-    condition?: string;
-    purchaseDate?: string;
-    price?: number;
-    notes?: string;
-  };
+    artist: string
+    album: string
+    year: number
+    genre?: string
+    condition?: string
+    purchaseDate?: string
+    price?: number
+    notes?: string
+  }
 }
 
 export function RecordDetails({ record }: RecordDetailsProps) {
@@ -31,21 +31,27 @@ export function RecordDetails({ record }: RecordDetailsProps) {
 
         {record.genre && (
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Gênero</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Gênero
+            </h3>
             <p className="text-sm">{record.genre}</p>
           </div>
         )}
 
         {record.condition && (
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Condição</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Condição
+            </h3>
             <p className="text-sm">{record.condition}</p>
           </div>
         )}
 
         {record.purchaseDate && (
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Data da Compra</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Data da Compra
+            </h3>
             <p className="text-sm">{record.purchaseDate}</p>
           </div>
         )}
@@ -59,11 +65,13 @@ export function RecordDetails({ record }: RecordDetailsProps) {
 
         {record.notes && (
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Observações</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Observações
+            </h3>
             <p className="text-sm">{record.notes}</p>
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }

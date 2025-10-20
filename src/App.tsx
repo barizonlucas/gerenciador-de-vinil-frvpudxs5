@@ -33,9 +33,15 @@ export default function App() {
                 <Route element={<PublicRoute />}>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
                 </Route>
-                <Route path="/update-password" element={<UpdatePasswordPage />} />
+                <Route
+                  path="/update-password"
+                  element={<UpdatePasswordPage />}
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </RecordProvider>

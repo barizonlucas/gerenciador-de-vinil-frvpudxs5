@@ -1,27 +1,28 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react'
 
 interface RecordContextType {
   currentRecord: {
-    artist: string;
-    album: string;
-    year: number | string;
-  } | null;
-  setCurrentRecord: (record: any) => void;
+    artist: string
+    album: string
+    year: number | string
+  } | null
+  setCurrentRecord: (record: any) => void
 }
 
 const RecordContext = createContext<RecordContextType>({
   currentRecord: null,
-  setCurrentRecord: () => {}
-});
+  setCurrentRecord: () => {},
+})
 
 export function RecordProvider({ children }: { children: React.ReactNode }) {
-  const [currentRecord, setCurrentRecord] = useState<RecordContextType['currentRecord']>(null);
+  const [currentRecord, setCurrentRecord] =
+    useState<RecordContextType['currentRecord']>(null)
 
   return (
     <RecordContext.Provider value={{ currentRecord, setCurrentRecord }}>
       {children}
     </RecordContext.Provider>
-  );
+  )
 }
 
-export const useRecord = () => useContext(RecordContext);
+export const useRecord = () => useContext(RecordContext)

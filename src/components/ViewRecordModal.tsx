@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { RecordModal } from './RecordModal';
+import { useState } from 'react'
+import { RecordModal } from './RecordModal'
 // Removed duplicate import: using the local VinylRecord type defined below
 
 export type VinylRecord = {
@@ -14,21 +14,22 @@ export type VinylRecord = {
   purchaseDate?: string // Data da Compra (formato YYYY-MM-DD, opcional)
   price?: number // Preço de Compra (opcional)
   notes?: string // Observações (opcional)
-};
+}
 
-export function ViewRecordModal({ selectedRecord }: { selectedRecord?: VinylRecord }) {
-  const [open, setOpen] = useState(false);
+export function ViewRecordModal({
+  selectedRecord,
+}: {
+  selectedRecord?: VinylRecord
+}) {
+  const [open, setOpen] = useState(false)
 
   return (
     <>
       <button onClick={() => setOpen(true)}>Ver detalhes</button>
 
-      <RecordModal
-        record={selectedRecord}
-        isOpen={open}
-      />
+      <RecordModal record={selectedRecord} isOpen={open} />
 
       {/* feche com setOpen(false) onde necessário (botão Fechar do modal) */}
     </>
-  );
+  )
 }
