@@ -1,9 +1,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 const GEMINI_API_KEY = Deno.env.get('gemini')
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
 
-// Define CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -11,17 +10,10 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// Handle CORS preflight requests
-const handleCors = (req: Request) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
-}
-
-Deno.serve(async (req) => {
-  // Handle CORS
-  const corsResponse = handleCors(req)
-  if (corsResponse) return corsResponse
 
   if (!GEMINI_API_KEY) {
     console.error('Missing Gemini API key secret.')
@@ -35,16 +27,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url)
-    const albumTitle = url.searchParams.get('albumTitle')
-    const artist = url.searchParams.get('artist')
-    const releaseYear = url.searchParams.get('releaseYear')
+    const { albumTitle, artist, releaseYear } = await req.json()
 
     if (!albumTitle || !artist || !releaseYear) {
       return new Response(
         JSON.stringify({
           error:
-            'Missing required query parameters: albumTitle, artist, releaseYear',
+            'Missing required body parameters: albumTitle, artist, releaseYear',
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -53,9 +42,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const prompt = `Como historiador musical, resuma brevemente a história do álbum "${albumTitle}" de ${artist} (${releaseYear}). 
-    Foque nos fatos mais importantes sobre o disco e seu impacto.
-    Responda em português do Brasil em 2 parágrafos concisos.`
+    const prompt = `Como um historiador de música, escreva um resumo conciso sobre a história e o impacto do álbum "${albumTitle}" de ${artist}, lançado em ${releaseYear}. Formate a resposta em HTML, usando parágrafos (<p>). A resposta deve ter no máximo 2 parágrafos e ser em português do Brasil.`
 
     const geminiResponse = await fetch(GEMINI_API_URL, {
       method: 'POST',
@@ -80,7 +67,7 @@ Deno.serve(async (req) => {
     const geminiData = await geminiResponse.json()
     const history =
       geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'Não foi possível gerar a história para este disco.'
+      '<p>Não foi possível gerar a história para este disco.</p>'
 
     return new Response(JSON.stringify({ history }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

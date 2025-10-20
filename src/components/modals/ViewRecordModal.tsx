@@ -13,7 +13,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DiscAlbum } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { RecordModal } from '@/components/RecordModal'
+import { RecordHistory } from '@/components/RecordHistory'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -46,7 +46,9 @@ export const ViewRecordModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] rounded-2xl shadow-modal data-[state=open]:animate-scale-up">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{record.albumTitle}</DialogTitle>
+          <DialogTitle className="text-2xl truncate">
+            {record.albumTitle}
+          </DialogTitle>
           <DialogDescription>{record.artist}</DialogDescription>
         </DialogHeader>
 
@@ -111,12 +113,7 @@ export const ViewRecordModal = ({
             </div>
           </TabsContent>
           <TabsContent value="history">
-            {/* agora usamos o modal único que já carrega detalhes + história */}
-            <RecordModal
-              record={record}
-              isOpen={isOpen}
-              onClose={handleClose}
-            />
+            <RecordHistory record={record} />
           </TabsContent>
         </Tabs>
 
