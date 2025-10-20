@@ -13,6 +13,7 @@ import LoginPage from './pages/Auth/Login'
 import RegisterPage from './pages/Auth/Register'
 import ForgotPasswordPage from './pages/Auth/ForgotPassword'
 import UpdatePasswordPage from './pages/Auth/UpdatePassword'
+import ProfilePage from './pages/Profile'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Index />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                 </Route>
               </Route>
               <Route element={<PublicRoute />}>
