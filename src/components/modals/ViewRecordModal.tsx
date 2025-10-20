@@ -44,7 +44,7 @@ export const ViewRecordModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl shadow-modal data-[state=open]:animate-scale-up">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl truncate">
             {record.albumTitle}
@@ -68,7 +68,7 @@ export const ViewRecordModal = ({
                   />
                 ) : (
                   <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-secondary">
-                    <DiscAlbum className="h-16 w-16 text-border" />
+                    <DiscAlbum className="h-16 w-16 text-muted-foreground" />
                   </div>
                 )}
               </div>
@@ -118,26 +118,14 @@ export const ViewRecordModal = ({
         </Tabs>
 
         <DialogFooter className="gap-2 sm:justify-end pt-4">
-          <Button
-            variant="outline"
-            onClick={handleEdit}
-            className="rounded-full"
-          >
+          <Button variant="outline" onClick={onClose}>
+            Fechar
+          </Button>
+          <Button variant="outline" onClick={handleEdit}>
             Editar
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="rounded-full"
-          >
+          <Button variant="destructive" onClick={handleDelete}>
             Excluir
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="rounded-full"
-          >
-            Fechar
           </Button>
         </DialogFooter>
       </DialogContent>

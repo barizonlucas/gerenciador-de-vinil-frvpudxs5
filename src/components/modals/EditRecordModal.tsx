@@ -29,7 +29,7 @@ export const EditRecordModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl shadow-modal data-[state=open]:animate-scale-up">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl truncate">
             Editar: {record.albumTitle}

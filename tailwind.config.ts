@@ -1,7 +1,6 @@
 import type { Config } from 'tailwindcss'
 import animatePlugin from 'tailwindcss-animate'
 import typographyPlugin from '@tailwindcss/typography'
-import aspectRatioPlugin from '@tailwindcss/aspect-ratio'
 
 export default {
   darkMode: ['class'],
@@ -17,18 +16,10 @@ export default {
       center: true,
       padding: '2rem',
       screens: {
-        sm: '640px',
-        md: '768px',
-        lg: '1024px',
-        xl: '1280px',
         '2xl': '1400px',
       },
     },
     extend: {
-      fontFamily: {
-        sans: ['"Open Sans"', 'system-ui', 'sans-serif'],
-        display: ['"Montserrat"', 'system-ui', 'sans-serif'],
-      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -38,7 +29,6 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
-          hover: 'hsl(var(--primary-hover))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -72,8 +62,6 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        xl: 'calc(var(--radius) + 4px)',
-        '2xl': 'calc(var(--radius) + 12px)',
       },
       keyframes: {
         'accordion-down': {
@@ -84,38 +72,17 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-        'scale-up': {
-          '0%': { opacity: '0', transform: 'scale(.95) translateY(10px)' },
-          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
-        },
-        'fade-in': {
-          from: { opacity: '0' },
-          to: { opacity: '1' },
-        },
         'fade-in-up': {
           from: { opacity: '0', transform: 'translateY(10px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
-        },
-        'slide-in-from-left': {
-          from: { transform: 'translateX(-100%)' },
-          to: { transform: 'translateX(0)' },
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'scale-up': 'scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        'fade-in': 'fade-in 0.5s ease-out forwards',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
-        'slide-in-from-left': 'slide-in-from-left 0.3s ease-out',
-      },
-      boxShadow: {
-        subtle: '0 2px 10px rgba(0,0,0,0.05)',
-        card: '0 4px 12px rgba(0,0,0,0.08)',
-        'card-hover': '0 8px 20px rgba(0,0,0,0.15)',
-        modal: '0 10px 30px rgba(0,0,0,0.2)',
       },
     },
   },
-  plugins: [animatePlugin, typographyPlugin, aspectRatioPlugin],
+  plugins: [animatePlugin, typographyPlugin],
 } satisfies Config

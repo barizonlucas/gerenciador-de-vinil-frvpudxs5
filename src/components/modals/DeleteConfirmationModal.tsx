@@ -27,7 +27,7 @@ export const DeleteConfirmationModal = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="rounded-2xl shadow-modal data-[state=open]:animate-scale-up">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
@@ -36,12 +36,10 @@ export const DeleteConfirmationModal = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose} className="rounded-full">
-            Cancelar
-          </AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => onConfirmDelete(record.id)}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Excluir
           </AlertDialogAction>

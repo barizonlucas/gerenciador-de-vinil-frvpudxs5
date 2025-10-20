@@ -55,14 +55,12 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-card border-border/50">
+    <div className="min-h-screen flex items-center justify-center bg-secondary p-4">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="flex justify-center items-center gap-3 mb-4">
-            <DiscAlbum className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-bold text-primary font-display">
-              Teko
-            </h1>
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <DiscAlbum className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold">Teko</h1>
           </div>
           <CardTitle className="text-2xl">Crie uma nova senha</CardTitle>
           <CardDescription>Digite sua nova senha abaixo.</CardDescription>

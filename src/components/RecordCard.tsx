@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { MoreVertical, Eye, Pencil, Trash2, DiscAlbum } from 'lucide-react'
-import { AspectRatio } from '@/components/ui/aspect-ratio'
 
 interface RecordCardProps {
   record: VinylRecord
@@ -30,9 +29,9 @@ export const RecordCard = ({
   onDelete,
 }: RecordCardProps) => {
   return (
-    <Card className="group w-full overflow-hidden rounded-xl border bg-secondary/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-card-hover hover:bg-secondary">
+    <Card className="w-full overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="p-0">
-        <AspectRatio ratio={1 / 1}>
+        <div className="h-48 w-full bg-muted flex items-center justify-center">
           {record.coverArtUrl ? (
             <img
               src={record.coverArtUrl}
@@ -40,11 +39,9 @@ export const RecordCard = ({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
-              <DiscAlbum className="h-16 w-16 text-muted-foreground" />
-            </div>
+            <DiscAlbum className="h-16 w-16 text-muted-foreground" />
           )}
-        </AspectRatio>
+        </div>
       </CardHeader>
       <CardContent className="p-4">
         <CardTitle className="truncate text-lg">{record.albumTitle}</CardTitle>
@@ -71,7 +68,7 @@ export const RecordCard = ({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(record)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" /> Excluir
             </DropdownMenuItem>

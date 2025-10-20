@@ -7,13 +7,12 @@ import { VinylRecord } from '@/types/vinyl'
 import { ViewRecordModal } from '@/components/modals/ViewRecordModal'
 import { EditRecordModal } from '@/components/modals/EditRecordModal'
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const Index = () => {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { records, loading, updateRecord, deleteRecord } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
@@ -61,27 +60,21 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
-      <section className="relative mb-12 overflow-hidden rounded-2xl p-8 text-center">
-        <div className="absolute inset-0 bg-hero-gradient"></div>
-        <div className="relative">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Bem-vindo, {profile?.display_name || user?.email}!
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Explore, gerencie e curta sua coleção de vinis.
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Sua Coleção</h1>
+          <p className="text-muted-foreground">
+            Explore e gerencie sua coleção de vinis.
           </p>
         </div>
-      </section>
-
-      <div className="mb-8">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <div className="relative w-full md:w-1/3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Pesquisar por álbum, artista ou gênero..."
+            placeholder="Pesquisar coleção..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 h-12 text-base rounded-full shadow-sm bg-secondary"
+            className="pl-9"
           />
         </div>
       </div>
@@ -90,7 +83,7 @@ const Index = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-auto aspect-square rounded-xl" />
+              <Skeleton className="h-48 w-full" />
               <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
@@ -122,7 +115,7 @@ const Index = () => {
           <p className="mt-1 text-sm text-muted-foreground">
             {searchTerm
               ? 'Tente uma pesquisa diferente.'
-              : 'Clique em "Adicionar Disco" na barra lateral para começar.'}
+              : 'Clique em "Adicionar Disco" para começar.'}
           </p>
         </div>
       )}

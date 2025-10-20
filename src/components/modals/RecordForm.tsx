@@ -254,17 +254,10 @@ export const RecordForm = ({
           )}
         />
         <div className="flex justify-end gap-4 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            className="rounded-full px-6 py-3"
-          >
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="rounded-full px-6 py-3">
-            {submitButtonText}
-          </Button>
+          <Button type="submit">{submitButtonText}</Button>
         </div>
       </form>
     </Form>

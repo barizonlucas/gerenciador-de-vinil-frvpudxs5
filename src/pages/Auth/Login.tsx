@@ -55,18 +55,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-card border-border/50">
+    <div className="min-h-screen flex items-center justify-center bg-secondary p-4">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="flex justify-center items-center gap-3 mb-4">
-            <DiscAlbum className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-bold text-primary font-display">
-              Teko
-            </h1>
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <DiscAlbum className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold">Teko</h1>
           </div>
-          <CardTitle className="text-2xl">Bem-vindo de volta!</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Faça login para acessar sua coleção.
+            Entre com seu email e senha para continuar.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -106,19 +104,22 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+              <div className="text-right text-sm">
+                <Link
+                  to="/forgot-password"
+                  className="underline hover:text-primary"
+                >
+                  Esqueceu sua senha?
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            <Link to="/forgot-password" className="underline">
-              Esqueceu sua senha?
-            </Link>
-          </div>
-          <div className="mt-2 text-center text-sm">
             Não tem uma conta?{' '}
-            <Link to="/register" className="underline">
+            <Link to="/register" className="underline hover:text-primary">
               Registre-se
             </Link>
           </div>

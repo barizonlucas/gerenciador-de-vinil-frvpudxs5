@@ -90,7 +90,7 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-2">Configurações</h1>
+      <h1 className="text-3xl font-bold mb-2">Perfil</h1>
       <p className="text-muted-foreground mb-8">
         Gerencie seu perfil e preferências.
       </p>
@@ -98,9 +98,6 @@ export default function ProfilePage() {
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Foto de Perfil</CardTitle>
-          <CardDescription>
-            Esta foto será exibida publicamente.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <AvatarUploader />
@@ -108,14 +105,14 @@ export default function ProfilePage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-          <CardDescription>
-            Atualize seu nome de exibição e email.
-          </CardDescription>
-        </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardHeader>
+              <CardTitle>Informações Pessoais</CardTitle>
+              <CardDescription>
+                Atualize seu nome de exibição e email.
+              </CardDescription>
+            </CardHeader>
             <CardContent className="space-y-6">
               <FormItem>
                 <FormLabel>Email</FormLabel>
