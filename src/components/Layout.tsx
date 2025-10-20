@@ -13,9 +13,9 @@ export default function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-secondary">
         <AppSidebar onAddRecord={() => setIsAddModalOpen(true)} />
-        <div className="flex flex-1 flex-col md:pl-72">
+        <div className="flex flex-1 flex-col bg-background md:pl-72">
           <Header />
           <main className="flex-1">
             <Outlet />
