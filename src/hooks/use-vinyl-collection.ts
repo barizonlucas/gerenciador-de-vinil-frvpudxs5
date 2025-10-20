@@ -8,15 +8,25 @@ export const useVinylCollection = () => {
   const { user } = useAuth()
   const [records, setRecords] = useState<VinylRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchRecords = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
+    if (!user) {
+      setRecords([])
+      setLoading(false)
+      return
+    }
     try {
+      setLoading(true)
       const data = await vinylService.getRecords()
       setRecords(data)
-    } catch (error) {
-      toast.error('Falha ao carregar os discos.')
+      setError(null)
+    } catch (err) {
+      const errorMessage =
+        'Ocorreu um erro ao buscar os discos. Tente novamente mais tarde.'
+      setError(errorMessage)
+      toast.error(errorMessage)
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -28,14 +38,12 @@ export const useVinylCollection = () => {
 
   const addRecord = async (record: Omit<VinylRecord, 'id' | 'user_id'>) => {
     try {
-      const newRecord = await vinylService.addRecord({
-        ...record,
-        user_id: user!.id,
-      })
+      const newRecord = await vinylService.addRecord(record)
       setRecords((prev) => [newRecord, ...prev])
-      toast.success(`"${newRecord.albumTitle}" adicionado com sucesso!`)
-    } catch (error) {
+      toast.success(`"${newRecord.albumTitle}" foi adicionado à sua coleção!`)
+    } catch (err) {
       toast.error('Falha ao adicionar o disco.')
+      console.error(err)
     }
   }
 
@@ -45,24 +53,34 @@ export const useVinylCollection = () => {
       setRecords((prev) =>
         prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)),
       )
-      toast.success(`"${updatedRecord.albumTitle}" atualizado com sucesso!`)
-    } catch (error) {
+      toast.success(`"${updatedRecord.albumTitle}" foi atualizado.`)
+    } catch (err) {
       toast.error('Falha ao atualizar o disco.')
+      console.error(err)
     }
   }
 
   const deleteRecord = async (id: string) => {
     const recordToDelete = records.find((r) => r.id === id)
+    if (!recordToDelete) return
+
     try {
       await vinylService.deleteRecord(id)
       setRecords((prev) => prev.filter((r) => r.id !== id))
-      if (recordToDelete) {
-        toast.success(`"${recordToDelete.albumTitle}" excluído com sucesso!`)
-      }
-    } catch (error) {
+      toast.success(`"${recordToDelete.albumTitle}" foi excluído.`)
+    } catch (err) {
       toast.error('Falha ao excluir o disco.')
+      console.error(err)
     }
   }
 
-  return { records, loading, addRecord, updateRecord, deleteRecord }
+  return {
+    records,
+    loading,
+    error,
+    fetchRecords,
+    addRecord,
+    updateRecord,
+    deleteRecord,
+  }
 }

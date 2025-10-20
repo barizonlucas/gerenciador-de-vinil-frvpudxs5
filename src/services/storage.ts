@@ -6,26 +6,26 @@ export const uploadAvatar = async (file: File): Promise<string> => {
   } = await supabase.auth.getUser()
   if (!user) throw new Error('User not authenticated')
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${user.id}-${Date.now()}.${fileExt}`
-  const filePath = `${fileName}`
+  const formData = new FormData()
+  formData.append('avatar', file)
 
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true,
-    })
+  const { data, error } = await supabase.functions.invoke('upload-avatar', {
+    body: formData,
+  })
 
-  if (uploadError) {
-    console.error('Error uploading avatar:', uploadError)
-    throw uploadError
+  if (error) {
+    console.error('Error invoking upload-avatar function:', error)
+    throw new Error(error.message || 'Falha ao enviar a foto para o servidor.')
   }
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+  if (data.error) {
+    console.error('Error from upload-avatar function:', data.error)
+    throw new Error(data.error)
+  }
 
   if (!data.publicUrl) {
-    throw new Error('Could not get public URL for avatar')
+    console.error('Function did not return a publicUrl', data)
+    throw new Error('Falha ao obter o URL público da foto.')
   }
 
   return data.publicUrl
