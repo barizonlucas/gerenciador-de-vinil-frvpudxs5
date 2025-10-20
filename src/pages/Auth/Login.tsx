@@ -61,7 +61,7 @@ export default function LoginPage() {
           <div className="flex justify-center items-center gap-3 mb-4">
             <DiscAlbum className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-primary font-display">
-              Minha Coleção
+              Teko
             </h1>
           </div>
           <CardTitle className="text-2xl">Bem-vindo de volta!</CardTitle>

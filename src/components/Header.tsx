@@ -25,7 +25,7 @@ export const Header = ({ onAddRecord }: HeaderProps) => {
         <Link to="/" className="flex items-center gap-3">
           <DiscAlbum className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold text-primary font-display hidden sm:inline">
-            Minha Coleção de Vinis
+            Teko
           </span>
         </Link>
         {user && (
