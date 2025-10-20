@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase/client'
 import { Profile } from '@/types/profile'
 
+type ProfileUpdate = Partial<
+  Pick<Profile, 'display_name' | 'avatar_url' | 'theme_preference'>
+>
+
 export const getProfile = async (): Promise<Profile | null> => {
   const {
     data: { user },
@@ -14,17 +18,16 @@ export const getProfile = async (): Promise<Profile | null> => {
     .single()
 
   if (error && error.code !== 'PGRST116') {
-    // PGRST116: 'No rows found' which is not an error in this case
     console.error('Error fetching profile:', error)
     throw error
   }
 
-  return data
+  return data as Profile | null
 }
 
-export const updateProfile = async (profileData: {
-  display_name: string | null
-}): Promise<Profile> => {
+export const updateProfile = async (
+  profileData: ProfileUpdate,
+): Promise<Profile> => {
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -32,10 +35,13 @@ export const updateProfile = async (profileData: {
 
   const { data, error } = await supabase
     .from('profiles')
-    .upsert({
-      user_id: user.id,
-      display_name: profileData.display_name,
-    })
+    .upsert(
+      {
+        user_id: user.id,
+        ...profileData,
+      },
+      { onConflict: 'user_id' },
+    )
     .select()
     .single()
 
@@ -44,5 +50,5 @@ export const updateProfile = async (profileData: {
     throw error
   }
 
-  return data
+  return data as Profile
 }

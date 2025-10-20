@@ -17,7 +17,17 @@ interface HeaderProps {
 }
 
 export const Header = ({ onAddRecord }: HeaderProps) => {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
+
+  const getInitials = () => {
+    if (profile?.display_name) {
+      return profile.display_name.charAt(0).toUpperCase()
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase()
+    }
+    return '?'
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur-md">
@@ -45,12 +55,10 @@ export const Header = ({ onAddRecord }: HeaderProps) => {
                 >
                   <Avatar>
                     <AvatarImage
-                      src={`https://img.usecurling.com/ppl/thumbnail?seed=${user.id}`}
-                      alt={user.email ?? ''}
+                      src={profile?.avatar_url ?? undefined}
+                      alt={profile?.display_name ?? user.email ?? ''}
                     />
-                    <AvatarFallback>
-                      {user.email?.[0].toUpperCase()}
-                    </AvatarFallback>
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -58,7 +66,7 @@ export const Header = ({ onAddRecord }: HeaderProps) => {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      Logado como
+                      {profile?.display_name || 'Logado como'}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground truncate">
                       {user.email}

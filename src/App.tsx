@@ -14,34 +14,40 @@ import RegisterPage from './pages/Auth/Register'
 import ForgotPasswordPage from './pages/Auth/ForgotPassword'
 import UpdatePasswordPage from './pages/Auth/UpdatePassword'
 import ProfilePage from './pages/Profile'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 export default function App() {
   return (
     <BrowserRouter>
       <TooltipProvider>
         <AuthProvider>
-          <VinylCollectionProvider>
-            <Toaster />
-            <Sonner richColors position="top-right" />
-            <Routes>
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/profile" element={<ProfilePage />} />
+          <ThemeProvider>
+            <VinylCollectionProvider>
+              <Toaster />
+              <Sonner richColors position="top-right" />
+              <Routes>
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                  </Route>
                 </Route>
-              </Route>
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
+                </Route>
                 <Route
-                  path="/forgot-password"
-                  element={<ForgotPasswordPage />}
+                  path="/update-password"
+                  element={<UpdatePasswordPage />}
                 />
-              </Route>
-              <Route path="/update-password" element={<UpdatePasswordPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </VinylCollectionProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </VinylCollectionProvider>
+          </ThemeProvider>
         </AuthProvider>
       </TooltipProvider>
     </BrowserRouter>
