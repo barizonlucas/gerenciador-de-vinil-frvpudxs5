@@ -25,9 +25,6 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AvatarUploader } from '@/components/AvatarUploader'
-import { useTheme } from '@/contexts/ThemeContext'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 
 const profileSchema = z.object({
   display_name: z.string().nullable(),
@@ -37,7 +34,6 @@ type ProfileFormValues = z.infer<typeof profileSchema>
 
 export default function ProfilePage() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
-  const { theme, setTheme, isThemeLoading } = useTheme()
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -68,9 +64,9 @@ export default function ProfilePage() {
     }
   }
 
-  if (authLoading || isThemeLoading) {
+  if (authLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <div className="container mx-auto py-8 px-4 md:px-6 max-w-2xl">
         <Skeleton className="h-8 w-48 mb-2" />
         <Skeleton className="h-4 w-64 mb-8" />
         <Card>
@@ -93,7 +89,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
+    <div className="container mx-auto py-8 px-4 md:px-6 max-w-2xl">
       <h1 className="text-3xl font-bold mb-2">Configurações</h1>
       <p className="text-muted-foreground mb-8">
         Gerencie seu perfil e preferências.
@@ -152,29 +148,6 @@ export default function ProfilePage() {
             </CardFooter>
           </form>
         </Form>
-      </Card>
-
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Aparência</CardTitle>
-          <CardDescription>
-            Personalize a aparência do aplicativo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="dark-mode" className="text-base">
-              Modo Escuro
-            </Label>
-            <Switch
-              id="dark-mode"
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) =>
-                setTheme(checked ? 'dark' : 'light')
-              }
-            />
-          </div>
-        </CardContent>
       </Card>
     </div>
   )

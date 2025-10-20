@@ -55,8 +55,8 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/50 p-4">
-      <Card className="w-full max-w-md shadow-card">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md shadow-card border-border/50">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center gap-3 mb-4">
             <DiscAlbum className="h-10 w-10 text-primary" />

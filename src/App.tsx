@@ -19,9 +19,9 @@ import { ThemeProvider } from './contexts/ThemeContext'
 export default function App() {
   return (
     <BrowserRouter>
-      <TooltipProvider>
-        <AuthProvider>
-          <ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
             <VinylCollectionProvider>
               <Toaster />
               <Sonner richColors position="top-right" />
@@ -47,9 +47,9 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </VinylCollectionProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </TooltipProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

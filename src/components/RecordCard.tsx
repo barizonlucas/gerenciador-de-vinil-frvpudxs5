@@ -30,7 +30,7 @@ export const RecordCard = ({
   onDelete,
 }: RecordCardProps) => {
   return (
-    <Card className="group w-full overflow-hidden rounded-xl border shadow-card transition-all duration-300 hover:scale-[1.02] hover:shadow-card-hover">
+    <Card className="group w-full overflow-hidden rounded-xl border bg-secondary/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-card-hover hover:bg-secondary">
       <CardHeader className="p-0">
         <AspectRatio ratio={1 / 1}>
           {record.coverArtUrl ? (
@@ -40,15 +40,15 @@ export const RecordCard = ({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-secondary">
-              <DiscAlbum className="h-16 w-16 text-border" />
+            <div className="flex h-full w-full items-center justify-center bg-muted">
+              <DiscAlbum className="h-16 w-16 text-muted-foreground" />
             </div>
           )}
         </AspectRatio>
       </CardHeader>
       <CardContent className="p-4">
         <CardTitle className="truncate text-lg">{record.albumTitle}</CardTitle>
-        <p className="text-sm text-secondary-foreground">{record.artist}</p>
+        <p className="text-sm text-muted-foreground">{record.artist}</p>
       </CardContent>
       <CardFooter className="flex justify-between p-4 pt-0">
         <p className="text-xs text-muted-foreground">{record.releaseYear}</p>

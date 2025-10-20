@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const Index = () => {
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { records, loading, updateRecord, deleteRecord } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
@@ -60,15 +60,20 @@ const Index = () => {
     setModalState({ view: null, edit: null, delete: null })
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <section className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Teko</h1>
-        <p className="text-lg text-secondary-foreground max-w-2xl mx-auto">
-          Pesquise, filtre e gerencie seus discos de vinil favoritos.
-        </p>
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <section className="relative mb-12 overflow-hidden rounded-2xl p-8 text-center">
+        <div className="absolute inset-0 bg-hero-gradient"></div>
+        <div className="relative">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Bem-vindo, {profile?.display_name || user?.email}!
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Explore, gerencie e curta sua coleção de vinis.
+          </p>
+        </div>
       </section>
 
-      <div className="mb-8 sticky top-[72px] bg-background/95 backdrop-blur-sm py-4 z-30">
+      <div className="mb-8">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
@@ -76,7 +81,7 @@ const Index = () => {
             placeholder="Pesquisar por álbum, artista ou gênero..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 h-12 text-base rounded-full shadow-sm"
+            className="pl-12 h-12 text-base rounded-full shadow-sm bg-secondary"
           />
         </div>
       </div>
@@ -117,16 +122,8 @@ const Index = () => {
           <p className="mt-1 text-sm text-muted-foreground">
             {searchTerm
               ? 'Tente uma pesquisa diferente.'
-              : 'Que tal adicionar seu primeiro disco?'}
+              : 'Clique em "Adicionar Disco" na barra lateral para começar.'}
           </p>
-          {!searchTerm && (
-            <Button
-              className="mt-6 rounded-full"
-              onClick={() => document.querySelector('header button')?.click()}
-            >
-              Adicionar Disco
-            </Button>
-          )}
         </div>
       )}
 

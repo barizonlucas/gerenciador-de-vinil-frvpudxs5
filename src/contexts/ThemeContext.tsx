@@ -27,13 +27,13 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const { profile, loading: authLoading } = useAuth()
-  const [theme, setTheme] = useState<Theme>('light')
+  const [theme, setTheme] = useState<Theme>('dark') // Default to dark
   const [isThemeLoading, setIsThemeLoading] = useState(true)
 
   useEffect(() => {
     if (!authLoading) {
-      const userTheme = profile?.theme_preference || 'light'
-      setTheme(userTheme)
+      const userTheme = profile?.theme_preference || 'dark'
+      setTheme(userTheme as Theme)
       setIsThemeLoading(false)
     }
   }, [profile, authLoading])
