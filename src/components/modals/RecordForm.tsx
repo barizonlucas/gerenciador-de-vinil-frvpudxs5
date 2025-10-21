@@ -32,40 +32,51 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { Calendar } from '../ui/calendar'
 
-const currentYear = new Date().getFullYear();
+const currentYear = new Date().getFullYear()
 
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
-  
-  releaseYear: z.number({
-    required_error: 'Ano é obrigatório.',
-    invalid_type_error: 'Ano inválido.',
-  })
+
+  releaseYear: z
+    .number({
+      required_error: 'Ano é obrigatório.',
+      invalid_type_error: 'Ano inválido.',
+    })
     .int('Ano deve ser inteiro.')
     .gte(1850, 'Ano mínimo: 1850')
     .lte(currentYear + 1, 'Ano muito no futuro.')
     .optional(),
 
-  genre: z.string().transform(v => v?.trim() || undefined).optional(),
-  notes: z.string().transform(v => v?.trim() || undefined).optional(),
+  genre: z
+    .string()
+    .transform((v) => v?.trim() || undefined)
+    .optional(),
+  notes: z
+    .string()
+    .transform((v) => v?.trim() || undefined)
+    .optional(),
 
-  coverArtUrl: z.string()
+  coverArtUrl: z
+    .string()
     .url('URL inválida.')
-    .regex(/\.(jpe?g|png|gif|webp)$/i, 'URL deve ser de uma imagem (jpg, png, etc.)')
+    .regex(
+      /\.(jpe?g|png|gif|webp)$/i,
+      'URL deve ser de uma imagem (jpg, png, etc.)',
+    )
     .optional()
-    .transform(v => v || undefined),
+    .transform((v) => v || undefined),
 
   condition: z.enum(['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim']).optional(),
   purchaseDate: z.date().optional(),
 
   price: z.number().optional(),
-});
+})
 
 type RecordFormValues = z.infer<typeof formSchema>
 
 interface RecordFormProps {
-  onSubmit: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void;
+  onSubmit: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void
   onCancel: () => void
   initialData?: VinylRecord
   submitButtonText: string
@@ -88,11 +99,11 @@ export const RecordForm = ({
       condition: initialData?.condition ?? undefined,
       purchaseDate: initialData?.purchaseDate
         ? parseISO(initialData.purchaseDate as string)
-        : undefined,      
+        : undefined,
       price: initialData?.price ?? undefined,
       notes: initialData?.notes ?? undefined,
     },
-  });
+  })
 
   useEffect(() => {
     if (initialData) {
@@ -108,16 +119,16 @@ export const RecordForm = ({
           : undefined,
         price: initialData.price ?? undefined,
         notes: initialData.notes ?? undefined,
-      });
+      })
     } else {
-      form.reset(); // Limpa tudo se não há initialData
+      form.reset() // Limpa tudo se não há initialData
     }
-  }, [initialData, form]);
+  }, [initialData, form])
 
   const handleSubmit = (data: RecordFormValues) => {
     const purchaseDateString = data.purchaseDate
       ? format(data.purchaseDate, 'yyyy-MM-dd')
-      : undefined; // use null se o banco exigir
+      : undefined // use null se o banco exigir
 
     const payload: Omit<VinylRecord, 'id' | 'user_id'> = {
       albumTitle: data.albumTitle.trim(),
@@ -125,18 +136,16 @@ export const RecordForm = ({
       releaseYear: data.releaseYear, // já é number garantido pelo schema
 
       // Se o seu tipo VinylRecord usa nullables no Supabase, troque para null:
-      condition: data.condition,                      // union ok
+      condition: data.condition, // union ok
       genre: data.genre?.trim() || null,
       coverArtUrl: data.coverArtUrl || null,
       purchaseDate: purchaseDateString ?? null,
       price: typeof data.price === 'number' ? data.price : null,
       notes: data.notes?.trim() || null,
-    };
+    }
 
-    onSubmit(payload);
-  };
-
-
+    onSubmit(payload)
+  }
 
   return (
     <Form {...form}>
@@ -177,7 +186,7 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Ano</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 1969" {...field}/>                
+                  <Input type="number" placeholder="e.g., 1969" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -217,8 +226,8 @@ export const RecordForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Condição</FormLabel>
-                <Select 
-                  value={field.value ?? ''} 
+                <Select
+                  value={field.value ?? ''}
                   onValueChange={field.onChange}
                   aria-label="Condição do vinil"
                 >
@@ -228,11 +237,13 @@ export const RecordForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(c => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
+                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(
+                      (c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -292,7 +303,9 @@ export const RecordForm = ({
                     {...field}
                     aria-describedby="price-help"
                   />
-                  <span id="price-help" className="sr-only">em reais</span>
+                  <span id="price-help" className="sr-only">
+                    em reais
+                  </span>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -313,7 +326,14 @@ export const RecordForm = ({
           )}
         />
         <div className="flex justify-end gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={() => {form.reset(); onCancel();}}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              form.reset()
+              onCancel()
+            }}
+          >
             Cancelar
           </Button>
           <Button type="submit">{submitButtonText}</Button>
