@@ -37,40 +37,31 @@ const currentYear = new Date().getFullYear()
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
-
-  releaseYear: z
-    .number({
-      required_error: 'Ano é obrigatório.',
-      invalid_type_error: 'Ano inválido.',
-    })
-    .int('Ano deve ser inteiro.')
-    .gte(1850, 'Ano mínimo: 1850')
-    .lte(currentYear + 1, 'Ano muito no futuro.')
-    .optional(),
-
-  genre: z
-    .string()
-    .transform((v) => v?.trim() || undefined)
-    .optional(),
-  notes: z
-    .string()
-    .transform((v) => v?.trim() || undefined)
-    .optional(),
-
-  coverArtUrl: z
-    .string()
-    .url('URL inválida.')
-    .regex(
-      /\.(jpe?g|png|gif|webp)$/i,
-      'URL deve ser de uma imagem (jpg, png, etc.)',
-    )
-    .optional()
-    .transform((v) => v || undefined),
-
+  releaseYear: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.coerce
+      .number({
+        invalid_type_error: 'Ano deve ser um número.',
+      })
+      .int('Ano deve ser inteiro.')
+      .min(1800, 'Ano de lançamento parece muito antigo.')
+      .max(currentYear + 1, 'Ano de lançamento não pode ser no futuro.')
+      .optional(),
+  ),
+  genre: z.string().optional(),
+  notes: z.string().optional(),
+  coverArtUrl: z.string().url('URL inválida.').optional().or(z.literal('')),
   condition: z.enum(['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim']).optional(),
   purchaseDate: z.date().optional(),
-
-  price: z.number().optional(),
+  price: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.coerce
+      .number({
+        invalid_type_error: 'Preço deve ser um número.',
+      })
+      .min(0, 'Preço não pode ser negativo.')
+      .optional(),
+  ),
 })
 
 type RecordFormValues = z.infer<typeof formSchema>
@@ -94,14 +85,14 @@ export const RecordForm = ({
       albumTitle: initialData?.albumTitle ?? '',
       artist: initialData?.artist ?? '',
       releaseYear: initialData?.releaseYear ?? undefined,
-      genre: initialData?.genre ?? undefined,
-      coverArtUrl: initialData?.coverArtUrl ?? undefined,
+      genre: initialData?.genre ?? '',
+      coverArtUrl: initialData?.coverArtUrl ?? '',
       condition: initialData?.condition ?? undefined,
       purchaseDate: initialData?.purchaseDate
         ? parseISO(initialData.purchaseDate as string)
         : undefined,
       price: initialData?.price ?? undefined,
-      notes: initialData?.notes ?? undefined,
+      notes: initialData?.notes ?? '',
     },
   })
 
@@ -111,32 +102,28 @@ export const RecordForm = ({
         albumTitle: initialData.albumTitle ?? '',
         artist: initialData.artist ?? '',
         releaseYear: initialData.releaseYear ?? undefined,
-        genre: initialData.genre ?? undefined,
-        coverArtUrl: initialData.coverArtUrl ?? undefined,
+        genre: initialData.genre ?? '',
+        coverArtUrl: initialData.coverArtUrl ?? '',
         condition: initialData.condition ?? undefined,
         purchaseDate: initialData.purchaseDate
           ? parseISO(initialData.purchaseDate as string)
           : undefined,
         price: initialData.price ?? undefined,
-        notes: initialData.notes ?? undefined,
+        notes: initialData.notes ?? '',
       })
-    } else {
-      form.reset() // Limpa tudo se não há initialData
     }
   }, [initialData, form])
 
   const handleSubmit = (data: RecordFormValues) => {
     const purchaseDateString = data.purchaseDate
       ? format(data.purchaseDate, 'yyyy-MM-dd')
-      : undefined // use null se o banco exigir
+      : undefined
 
     const payload: Omit<VinylRecord, 'id' | 'user_id'> = {
       albumTitle: data.albumTitle.trim(),
       artist: data.artist.trim(),
-      releaseYear: data.releaseYear, // já é number garantido pelo schema
-
-      // Se o seu tipo VinylRecord usa nullables no Supabase, troque para null:
-      condition: data.condition, // union ok
+      releaseYear: data.releaseYear,
+      condition: data.condition,
       genre: data.genre?.trim() || null,
       coverArtUrl: data.coverArtUrl || null,
       purchaseDate: purchaseDateString ?? null,
@@ -186,7 +173,12 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Ano</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 1969" {...field} />
+                  <Input
+                    type="number"
+                    placeholder="e.g., 1969"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -199,7 +191,11 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Gênero</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Rock" {...field} />
+                  <Input
+                    placeholder="e.g., Rock"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -213,7 +209,12 @@ export const RecordForm = ({
             <FormItem>
               <FormLabel>URL da Capa</FormLabel>
               <FormControl>
-                <Input type="url" placeholder="https://..." {...field} />
+                <Input
+                  type="url"
+                  placeholder="https://..."
+                  {...field}
+                  value={field.value ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -268,7 +269,9 @@ export const RecordForm = ({
                         aria-label={`Selecionar data da compra${field.value ? `, selecionada: ${format(field.value, 'dd/MM/yyyy')}` : ''}`}
                       >
                         {field.value ? (
-                          format(field.value, 'PPP')
+                          format(field.value, 'PPP', {
+                            locale: require('date-fns/locale/pt-BR'),
+                          })
                         ) : (
                           <span>Escolha</span>
                         )}
@@ -301,6 +304,7 @@ export const RecordForm = ({
                     step="0.01"
                     placeholder="e.g., 25.50"
                     {...field}
+                    value={field.value ?? ''}
                     aria-describedby="price-help"
                   />
                   <span id="price-help" className="sr-only">
@@ -319,7 +323,11 @@ export const RecordForm = ({
             <FormItem>
               <FormLabel>Observações</FormLabel>
               <FormControl>
-                <Textarea placeholder="Qualquer nota adicional..." {...field} />
+                <Textarea
+                  placeholder="Qualquer nota adicional..."
+                  {...field}
+                  value={field.value ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

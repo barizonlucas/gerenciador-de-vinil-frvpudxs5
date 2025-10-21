@@ -14,11 +14,7 @@ import { Button } from './ui/button'
 import { ThemeToggle } from './ThemeToggle'
 import { cn } from '@/lib/utils'
 
-interface HeaderProps {
-  onAddRecord: () => void
-}
-
-export const Header = ({ onAddRecord }: HeaderProps) => {
+export const Header = () => {
   const { user, profile, signOut } = useAuth()
 
   const getInitials = () => {
@@ -53,8 +49,10 @@ export const Header = ({ onAddRecord }: HeaderProps) => {
           </NavLink>
         </nav>
         <div className="flex flex-1 items-center justify-end gap-4">
-          <Button onClick={onAddRecord}>
-            <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
+          <Button asChild>
+            <Link to="/add-record">
+              <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
+            </Link>
           </Button>
           <ThemeToggle />
           {user && (
