@@ -3,7 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { VinylRecord } from '@/types/vinyl'
 import { Button } from '@/components/ui/button'
-import { parseISO } from 'date-fns'
+import { parseISO, format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { useEffect } from 'react'
 import {
   Form,
@@ -29,7 +30,6 @@ import {
 } from '@/components/ui/popover'
 import { CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
 import { Calendar } from '../ui/calendar'
 
 const currentYear = new Date().getFullYear()
@@ -124,11 +124,11 @@ export const RecordForm = ({
       artist: data.artist.trim(),
       releaseYear: data.releaseYear,
       condition: data.condition,
-      genre: data.genre?.trim() || null,
-      coverArtUrl: data.coverArtUrl || null,
-      purchaseDate: purchaseDateString ?? null,
-      price: typeof data.price === 'number' ? data.price : null,
-      notes: data.notes?.trim() || null,
+      genre: data.genre?.trim() || undefined,
+      coverArtUrl: data.coverArtUrl || undefined,
+      purchaseDate: purchaseDateString,
+      price: typeof data.price === 'number' ? data.price : undefined,
+      notes: data.notes?.trim() || undefined,
     }
 
     onSubmit(payload)
@@ -270,7 +270,7 @@ export const RecordForm = ({
                       >
                         {field.value ? (
                           format(field.value, 'PPP', {
-                            locale: require('date-fns/locale/pt-BR'),
+                            locale: ptBR,
                           })
                         ) : (
                           <span>Escolha</span>
