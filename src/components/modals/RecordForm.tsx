@@ -3,6 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { VinylRecord } from '@/types/vinyl'
 import { Button } from '@/components/ui/button'
+import { parseISO } from 'date-fns'
+import { useEffect } from 'react'
 import {
   Form,
   FormControl,
@@ -30,22 +32,40 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { Calendar } from '../ui/calendar'
 
+const currentYear = new Date().getFullYear();
+
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
-  releaseYear: z.coerce.number().optional(),
-  genre: z.string().optional(),
-  coverArtUrl: z.string().url('URL inválida.').optional().or(z.literal('')),
+  
+  releaseYear: z.number({
+    required_error: 'Ano é obrigatório.',
+    invalid_type_error: 'Ano inválido.',
+  })
+    .int('Ano deve ser inteiro.')
+    .gte(1850, 'Ano mínimo: 1850')
+    .lte(currentYear + 1, 'Ano muito no futuro.')
+    .optional(),
+
+  genre: z.string().transform(v => v?.trim() || undefined).optional(),
+  notes: z.string().transform(v => v?.trim() || undefined).optional(),
+
+  coverArtUrl: z.string()
+    .url('URL inválida.')
+    .regex(/\.(jpe?g|png|gif|webp)$/i, 'URL deve ser de uma imagem (jpg, png, etc.)')
+    .optional()
+    .transform(v => v || undefined),
+
   condition: z.enum(['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim']).optional(),
   purchaseDate: z.date().optional(),
-  price: z.coerce.number().optional(),
-  notes: z.string().optional(),
-})
+
+  price: z.number().optional(),
+});
 
 type RecordFormValues = z.infer<typeof formSchema>
 
 interface RecordFormProps {
-  onSubmit: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void
+  onSubmit: (data: Omit<VinylRecord, 'id' | 'user_id'>) => void;
   onCancel: () => void
   initialData?: VinylRecord
   submitButtonText: string
@@ -60,26 +80,63 @@ export const RecordForm = ({
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      albumTitle: initialData?.albumTitle || '',
-      artist: initialData?.artist || '',
-      releaseYear: initialData?.releaseYear,
-      genre: initialData?.genre || '',
-      coverArtUrl: initialData?.coverArtUrl || '',
-      condition: initialData?.condition,
+      albumTitle: initialData?.albumTitle ?? '',
+      artist: initialData?.artist ?? '',
+      releaseYear: initialData?.releaseYear ?? undefined,
+      genre: initialData?.genre ?? undefined,
+      coverArtUrl: initialData?.coverArtUrl ?? undefined,
+      condition: initialData?.condition ?? undefined,
       purchaseDate: initialData?.purchaseDate
-        ? new Date(initialData.purchaseDate)
-        : undefined,
-      price: initialData?.price,
-      notes: initialData?.notes || '',
+        ? parseISO(initialData.purchaseDate as string)
+        : undefined,      
+      price: initialData?.price ?? undefined,
+      notes: initialData?.notes ?? undefined,
     },
-  })
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        albumTitle: initialData.albumTitle ?? '',
+        artist: initialData.artist ?? '',
+        releaseYear: initialData.releaseYear ?? undefined,
+        genre: initialData.genre ?? undefined,
+        coverArtUrl: initialData.coverArtUrl ?? undefined,
+        condition: initialData.condition ?? undefined,
+        purchaseDate: initialData.purchaseDate
+          ? parseISO(initialData.purchaseDate as string)
+          : undefined,
+        price: initialData.price ?? undefined,
+        notes: initialData.notes ?? undefined,
+      });
+    } else {
+      form.reset(); // Limpa tudo se não há initialData
+    }
+  }, [initialData, form]);
 
   const handleSubmit = (data: RecordFormValues) => {
     const purchaseDateString = data.purchaseDate
       ? format(data.purchaseDate, 'yyyy-MM-dd')
-      : undefined
-    onSubmit({ ...data, purchaseDate: purchaseDateString })
-  }
+      : undefined; // use null se o banco exigir
+
+    const payload: Omit<VinylRecord, 'id' | 'user_id'> = {
+      albumTitle: data.albumTitle.trim(),
+      artist: data.artist.trim(),
+      releaseYear: data.releaseYear, // já é number garantido pelo schema
+
+      // Se o seu tipo VinylRecord usa nullables no Supabase, troque para null:
+      condition: data.condition,                      // union ok
+      genre: data.genre?.trim() || null,
+      coverArtUrl: data.coverArtUrl || null,
+      purchaseDate: purchaseDateString ?? null,
+      price: typeof data.price === 'number' ? data.price : null,
+      notes: data.notes?.trim() || null,
+    };
+
+    onSubmit(payload);
+  };
+
+
 
   return (
     <Form {...form}>
@@ -120,7 +177,7 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Ano</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 1969" {...field} />
+                  <Input type="number" placeholder="e.g., 1969" {...field}/>                
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -160,9 +217,10 @@ export const RecordForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Condição</FormLabel>
-                <Select
+                <Select 
+                  value={field.value ?? ''} 
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  aria-label="Condição do vinil"
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -170,13 +228,11 @@ export const RecordForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(
-                      (c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ),
-                    )}
+                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(c => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -198,6 +254,7 @@ export const RecordForm = ({
                           'w-full pl-3 text-left font-normal',
                           !field.value && 'text-muted-foreground',
                         )}
+                        aria-label={`Selecionar data da compra${field.value ? `, selecionada: ${format(field.value, 'dd/MM/yyyy')}` : ''}`}
                       >
                         {field.value ? (
                           format(field.value, 'PPP')
@@ -233,7 +290,9 @@ export const RecordForm = ({
                     step="0.01"
                     placeholder="e.g., 25.50"
                     {...field}
+                    aria-describedby="price-help"
                   />
+                  <span id="price-help" className="sr-only">em reais</span>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -254,7 +313,7 @@ export const RecordForm = ({
           )}
         />
         <div className="flex justify-end gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={() => {form.reset(); onCancel();}}>
             Cancelar
           </Button>
           <Button type="submit">{submitButtonText}</Button>
