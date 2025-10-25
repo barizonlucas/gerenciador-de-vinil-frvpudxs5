@@ -10,11 +10,21 @@ import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationM
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { AddRecordModal } from '@/components/modals/AddRecordModal'
+import { toast } from 'sonner'
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { records, loading, updateRecord, deleteRecord } = useVinylContext()
+  const {
+    records,
+    loading,
+    updateRecord,
+    deleteRecord,
+    addRecord,
+    isAddModalOpen,
+    closeAddModal,
+  } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
   const [modalState, setModalState] = useState<{
     view: VinylRecord | null
@@ -53,6 +63,17 @@ const Index = () => {
   const handleConfirmDelete = (id: string) => {
     deleteRecord(id)
     setModalState({ ...modalState, delete: null })
+  }
+
+  const handleAddRecord = async (data: Omit<VinylRecord, 'id' | 'user_id'>) => {
+    try {
+      await addRecord(data)
+      toast.success(`"${data.albumTitle}" foi adicionado à sua coleção!`)
+      closeAddModal()
+    } catch (error) {
+      toast.error('Falha ao adicionar o disco. Tente novamente.')
+      console.error(error)
+    }
   }
 
   const closeModal = () =>
@@ -125,6 +146,11 @@ const Index = () => {
         </div>
       )}
 
+      <AddRecordModal
+        isOpen={isAddModalOpen}
+        onClose={closeAddModal}
+        onAddRecord={handleAddRecord}
+      />
       <ViewRecordModal
         isOpen={!!modalState.view}
         onClose={closeModal}

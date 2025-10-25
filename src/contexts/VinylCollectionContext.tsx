@@ -1,7 +1,13 @@
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, ReactNode, useState } from 'react'
 import { useVinylCollection } from '@/hooks/use-vinyl-collection'
 
-type VinylCollectionContextType = ReturnType<typeof useVinylCollection>
+type UseVinylCollectionType = ReturnType<typeof useVinylCollection>
+
+interface VinylCollectionContextType extends UseVinylCollectionType {
+  isAddModalOpen: boolean
+  openAddModal: () => void
+  closeAddModal: () => void
+}
 
 const VinylCollectionContext = createContext<
   VinylCollectionContextType | undefined
@@ -13,8 +19,20 @@ export const VinylCollectionProvider = ({
   children: ReactNode
 }) => {
   const collection = useVinylCollection()
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
+  const openAddModal = () => setIsAddModalOpen(true)
+  const closeAddModal = () => setIsAddModalOpen(false)
+
+  const value: VinylCollectionContextType = {
+    ...collection,
+    isAddModalOpen,
+    openAddModal,
+    closeAddModal,
+  }
+
   return (
-    <VinylCollectionContext.Provider value={collection}>
+    <VinylCollectionContext.Provider value={value}>
       {children}
     </VinylCollectionContext.Provider>
   )
