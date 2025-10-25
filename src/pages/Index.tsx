@@ -10,21 +10,12 @@ import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationM
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { AddRecordModal } from '@/components/modals/AddRecordModal'
 import { toast } from 'sonner'
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const {
-    records,
-    loading,
-    updateRecord,
-    deleteRecord,
-    addRecord,
-    isAddModalOpen,
-    closeAddModal,
-  } = useVinylContext()
+  const { records, loading, updateRecord, deleteRecord } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
   const [modalState, setModalState] = useState<{
     view: VinylRecord | null
@@ -49,30 +40,26 @@ const Index = () => {
   }, [records, searchTerm])
 
   const handleView = (record: VinylRecord) =>
-    setModalState({ ...modalState, view: record })
+    setModalState((prev) => ({ ...prev, view: record }))
   const handleEdit = (record: VinylRecord) =>
-    setModalState({ ...modalState, edit: record })
+    setModalState((prev) => ({ ...prev, edit: record }))
   const handleDelete = (record: VinylRecord) =>
-    setModalState({ ...modalState, delete: record })
+    setModalState((prev) => ({ ...prev, delete: record }))
 
   const handleUpdateRecord = (updated: VinylRecord) => {
     updateRecord(updated)
-    setModalState({ ...modalState, edit: null })
+    setModalState((prev) => ({ ...prev, edit: null }))
   }
 
-  const handleConfirmDelete = (id: string) => {
-    deleteRecord(id)
-    setModalState({ ...modalState, delete: null })
-  }
-
-  const handleAddRecord = async (data: Omit<VinylRecord, 'id' | 'user_id'>) => {
+  const handleConfirmDelete = async (id: string) => {
     try {
-      await addRecord(data)
-      toast.success(`"${data.albumTitle}" foi adicionado à sua coleção!`)
-      closeAddModal()
+      await deleteRecord(id)
+      toast.success('Disco removido da coleção')
     } catch (error) {
-      toast.error('Falha ao adicionar o disco. Tente novamente.')
-      console.error(error)
+      toast.error('Falha ao remover o disco. Tente novamente.')
+      console.error('Failed to delete record:', error)
+    } finally {
+      setModalState((prev) => ({ ...prev, delete: null }))
     }
   }
 
@@ -146,11 +133,6 @@ const Index = () => {
         </div>
       )}
 
-      <AddRecordModal
-        isOpen={isAddModalOpen}
-        onClose={closeAddModal}
-        onAddRecord={handleAddRecord}
-      />
       <ViewRecordModal
         isOpen={!!modalState.view}
         onClose={closeModal}
