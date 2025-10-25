@@ -50,15 +50,10 @@ const formSchema = z.object({
   coverArtUrl: z.string().url('URL inválida.').optional().or(z.literal('')),
   condition: z.enum(['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim']).optional(),
   purchaseDate: z.date().optional(),
-  price: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce
-      .number({
-        invalid_type_error: 'Preço deve ser um número.',
-      })
-      .min(0, 'Preço não pode ser negativo.')
-      .optional(),
-  ),
+  price: z.coerce
+    .number({ invalid_type_error: 'Preço deve ser um número.' })
+    .min(0, 'Preço não pode ser negativo.')
+    .optional(),
 })
 
 type RecordFormValues = z.infer<typeof formSchema>
@@ -309,9 +304,6 @@ export const RecordForm = ({
                     value={field.value ?? ''}
                     aria-describedby="price-help"
                   />
-                  <span id="price-help" className="sr-only">
-                    em reais
-                  </span>
                 </FormControl>
                 <FormMessage />
               </FormItem>
