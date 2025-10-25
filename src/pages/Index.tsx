@@ -58,11 +58,16 @@ const Index = () => {
   const closeModal = () =>
     setModalState({ view: null, edit: null, delete: null })
 
+  const totalDiscos = records.length
+  const discosLabel = totalDiscos === 1 ? 'disco' : 'discos'
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Sua Coleção</h1>
+          <h1 className="text-3xl font-bold">
+            Coleção: {totalDiscos} {discosLabel}
+          </h1>
           <p className="text-muted-foreground">
             Explore e gerencie sua coleção de vinis.
           </p>
@@ -115,7 +120,7 @@ const Index = () => {
           <p className="mt-1 text-sm text-muted-foreground">
             {searchTerm
               ? 'Tente uma pesquisa diferente.'
-              : 'Clique em "Adicionar Disco" para começar.'}
+              : 'Sua coleção ainda está vazia. Adicione seu primeiro vinil e comece a organizar com essência.'}
           </p>
         </div>
       )}
