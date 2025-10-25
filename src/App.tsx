@@ -15,7 +15,6 @@ import ForgotPasswordPage from './pages/Auth/ForgotPassword'
 import UpdatePasswordPage from './pages/Auth/UpdatePassword'
 import ProfilePage from './pages/Profile'
 import { ThemeProvider } from './contexts/ThemeContext'
-import AddRecordPage from './pages/AddRecord'
 
 export default function App() {
   return (
@@ -31,7 +30,6 @@ export default function App() {
                   <Route element={<Layout />}>
                     <Route path="/" element={<Index />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/add-record" element={<AddRecordPage />} />
                   </Route>
                 </Route>
                 <Route element={<PublicRoute />}>

@@ -37,17 +37,14 @@ const currentYear = new Date().getFullYear()
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
-  releaseYear: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce
-      .number({
-        invalid_type_error: 'Ano deve ser um número.',
-      })
-      .int('Ano deve ser inteiro.')
-      .min(1800, 'Ano de lançamento parece muito antigo.')
-      .max(currentYear + 1, 'Ano de lançamento não pode ser no futuro.')
-      .optional(),
-  ),
+  releaseYear: z.coerce
+    .number({
+      required_error: 'Ano de lançamento é obrigatório.',
+      invalid_type_error: 'Ano deve ser um número.',
+    })
+    .int('Ano deve ser inteiro.')
+    .min(1800, 'Ano de lançamento parece muito antigo.')
+    .max(currentYear + 1, 'Ano de lançamento não pode ser no futuro.'),
   genre: z.string().optional(),
   notes: z.string().optional(),
   coverArtUrl: z.string().url('URL inválida.').optional().or(z.literal('')),
@@ -171,13 +168,18 @@ export const RecordForm = ({
             name="releaseYear"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ano</FormLabel>
+                <FormLabel>Ano *</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     placeholder="e.g., 1969"
                     {...field}
                     value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === '' ? undefined : e.target.value,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />

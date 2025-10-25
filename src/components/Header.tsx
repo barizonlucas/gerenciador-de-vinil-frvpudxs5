@@ -13,9 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from './ui/button'
 import { ThemeToggle } from './ThemeToggle'
 import { cn } from '@/lib/utils'
+import { useVinylContext } from '@/contexts/VinylCollectionContext'
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth()
+  const { openAddModal } = useVinylContext()
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -49,10 +51,8 @@ export const Header = () => {
           </NavLink>
         </nav>
         <div className="flex flex-1 items-center justify-end gap-4">
-          <Button asChild>
-            <Link to="/add-record">
-              <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
-            </Link>
+          <Button onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
           </Button>
           <ThemeToggle />
           {user && (
