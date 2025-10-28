@@ -1,9 +1,6 @@
 import { createContext, useContext, ReactNode, useState } from 'react'
 import { useVinylCollection } from '@/hooks/use-vinyl-collection'
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { RecordForm } from '@/components/modals/RecordForm'
 type UseVinylCollectionType = ReturnType<typeof useVinylCollection>
 

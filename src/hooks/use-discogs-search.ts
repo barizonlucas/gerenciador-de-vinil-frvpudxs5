@@ -1,40 +1,40 @@
 // src/hooks/use-discogs-search.ts
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 
-const DISCOSGS_TOKEN = import.meta.env.VITE_DISCOGS_TOKEN;
+const DISCOSGS_TOKEN = import.meta.env.VITE_DISCOGS_TOKEN
 
 if (!DISCOSGS_TOKEN) {
-  console.warn('⚠️ VITE_DISCOGS_TOKEN não encontrado no .env');
+  console.warn('⚠️ VITE_DISCOGS_TOKEN não encontrado no .env')
 }
 
 interface DiscogsResult {
-  id: number;
-  title: string;
-  artist?: string;
-  year?: string;
-  thumb?: string;
-  cover_image?: string;
+  id: number
+  title: string
+  artist?: string
+  year?: string
+  thumb?: string
+  cover_image?: string
 }
 
 export const useDiscogsSearch = (
   query: string,
   type: 'release' | 'artist' = 'release',
-  options?: { perPage?: number }
+  options?: { perPage?: number },
 ) => {
-  const [results, setResults] = useState<DiscogsResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<DiscogsResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!query.trim() || !DISCOSGS_TOKEN) {
-      setResults([]);
-      return;
+      setResults([])
+      return
     }
 
-    const controller = new AbortController();
-    setLoading(true);
-    setError(null);
+    const controller = new AbortController()
+    setLoading(true)
+    setError(null)
 
     const search = async () => {
       try {
@@ -49,7 +49,7 @@ export const useDiscogsSearch = (
             'User-Agent': 'TekoApp/1.0 +https://teko.app', // obrigatório
           },
           signal: controller.signal,
-        });
+        })
 
         const formatted = res.data.results.map((r: any) => ({
           id: r.id,
@@ -58,25 +58,25 @@ export const useDiscogsSearch = (
           year: r.year,
           thumb: r.thumb,
           cover_image: r.cover_image,
-        }));
+        }))
 
-        setResults(formatted);
+        setResults(formatted)
       } catch (err: any) {
         if (!axios.isCancel(err)) {
-          setError(err.response?.data?.message || 'Erro na busca');
-          console.error('Discogs API error:', err);
+          setError(err.response?.data?.message || 'Erro na busca')
+          console.error('Discogs API error:', err)
         }
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    const timeout = setTimeout(search, 300); // debounce
+    const timeout = setTimeout(search, 300) // debounce
     return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [query, type, options?.perPage]);
+      clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [query, type, options?.perPage])
 
-  return { results, loading, error };
-};
+  return { results, loading, error }
+}

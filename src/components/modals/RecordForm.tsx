@@ -31,6 +31,9 @@ import {
 import { CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Calendar } from '../ui/calendar'
+import { DiscogsSearch } from '../DiscogsSearch'
+import { DiscogsSearchResult } from '@/types/discogs'
+import { Separator } from '../ui/separator'
 
 const currentYear = new Date().getFullYear()
 
@@ -106,6 +109,20 @@ export const RecordForm = ({
     }
   }, [initialData, form])
 
+  const handleDiscogsSelect = (result: DiscogsSearchResult) => {
+    form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
+    form.setValue('artist', result.artist, { shouldValidate: true })
+    if (result.year) {
+      form.setValue('releaseYear', parseInt(result.year, 10), {
+        shouldValidate: true,
+      })
+    }
+    if (result.genre) {
+      form.setValue('genre', result.genre)
+    }
+    form.setValue('coverArtUrl', result.coverArtUrl)
+  }
+
   const handleSubmit = (data: RecordFormValues) => {
     const purchaseDateString = data.purchaseDate
       ? format(data.purchaseDate, 'yyyy-MM-dd')
@@ -129,6 +146,15 @@ export const RecordForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {!initialData && (
+          <>
+            <FormItem>
+              <FormLabel>Busca Rápida</FormLabel>
+              <DiscogsSearch onSelect={handleDiscogsSelect} />
+            </FormItem>
+            <Separator className="my-6" />
+          </>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
