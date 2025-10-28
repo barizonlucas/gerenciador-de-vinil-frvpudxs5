@@ -1,6 +1,10 @@
 import { createContext, useContext, ReactNode, useState } from 'react'
 import { useVinylCollection } from '@/hooks/use-vinyl-collection'
-
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog'
+import { RecordForm } from '@/components/modals/RecordForm'
 type UseVinylCollectionType = ReturnType<typeof useVinylCollection>
 
 interface VinylCollectionContextType extends UseVinylCollectionType {
@@ -34,6 +38,18 @@ export const VinylCollectionProvider = ({
   return (
     <VinylCollectionContext.Provider value={value}>
       {children}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-lg">
+          <RecordForm
+            onSubmit={async (data) => {
+              await collection.addRecord(data)
+              setIsAddModalOpen(false)
+            }}
+            onCancel={closeAddModal}
+            submitButtonText="Adicionar"
+          />
+        </DialogContent>
+      </Dialog>
     </VinylCollectionContext.Provider>
   )
 }
