@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
-import { AddRecordModal } from './modals/AddRecordModal'
 import { toast } from 'sonner'
 import { VinylRecord } from '@/types/vinyl'
 
@@ -29,11 +28,6 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
-      <AddRecordModal
-        isOpen={isAddModalOpen}
-        onClose={closeAddModal}
-        onAddRecord={handleAddRecord}
-      />
     </div>
   )
 }

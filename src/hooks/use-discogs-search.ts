@@ -1,82 +1,55 @@
-// src/hooks/use-discogs-search.ts
-import { useState, useEffect } from 'react'
-import axios from 'axios'
+import { useEffect, useState, useRef } from 'react'
+import { ENDPOINTS } from '@/lib/api'
 
-const DISCOSGS_TOKEN = import.meta.env.VITE_DISCOGS_TOKEN
+const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-if (!DISCOSGS_TOKEN) {
-  console.warn('⚠️ VITE_DISCOGS_TOKEN não encontrado no .env')
-}
-
-interface DiscogsResult {
-  id: number
-  title: string
-  artist?: string
-  year?: string
-  thumb?: string
-  cover_image?: string
-}
-
-export const useDiscogsSearch = (
-  query: string,
-  type: 'release' | 'artist' = 'release',
-  options?: { perPage?: number },
-) => {
-  const [results, setResults] = useState<DiscogsResult[]>([])
+export function useDiscogsSearch() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (!query.trim() || !DISCOSGS_TOKEN) {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    if (query.length < 3) {
       setResults([])
       return
     }
 
-    const controller = new AbortController()
-    setLoading(true)
-    setError(null)
-
-    const search = async () => {
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
       try {
-        const res = await axios.get('https://api.discogs.com/database/search', {
-          params: {
-            q: query,
-            type,
-            per_page: options?.perPage ?? 10,
-          },
+        const res = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
+          method: 'POST',
           headers: {
-            Authorization: `Discogs token=${DISCOSGS_TOKEN}`,
-            'User-Agent': 'TekoApp/1.0 +https://teko.app', // obrigatório
+            Authorization: `Bearer ${KEY}`,
+            'Content-Type': 'application/json',
+            // Supabase pode adicionar apikey ou x-client-info → permita tudo
+            apikey: KEY,
           },
-          signal: controller.signal,
+          body: JSON.stringify({ q: query }),
         })
 
-        const formatted = res.data.results.map((r: any) => ({
-          id: r.id,
-          title: r.title,
-          artist: r.artist?.[0]?.name,
-          year: r.year,
-          thumb: r.thumb,
-          cover_image: r.cover_image,
-        }))
-
-        setResults(formatted)
-      } catch (err: any) {
-        if (!axios.isCancel(err)) {
-          setError(err.response?.data?.message || 'Erro na busca')
-          console.error('Discogs API error:', err)
+        if (!res.ok) {
+          const err = await res.text()
+          throw new Error(`HTTP ${res.status}: ${err}`)
         }
+
+        const data = await res.json()
+        setResults(data.results || [])
+      } catch (err: any) {
+        console.error('Erro na busca Discogs:', err)
+        setResults([])
       } finally {
         setLoading(false)
       }
-    }
+    }, 400)
 
-    const timeout = setTimeout(search, 300) // debounce
     return () => {
-      clearTimeout(timeout)
-      controller.abort()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [query, type, options?.perPage])
+  }, [query])
 
-  return { results, loading, error }
+  return { query, setQuery, results, loading }
 }

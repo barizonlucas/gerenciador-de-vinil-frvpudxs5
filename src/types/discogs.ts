@@ -1,8 +1,8 @@
 export interface DiscogsSearchResult {
   id: number
-  artist: string
   albumTitle: string
+  artist: string
   year?: string
-  coverArtUrl: string
-  genre?: string
+  genre?: string  
+  coverArtUrl?: string
 }

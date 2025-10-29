@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { DiscogsSearchResult } from '@/types/discogs'
-import { searchDiscogs } from '@/services/discogs'
-import { useDebounce } from '@/hooks/use-debounce'
+import { ENDPOINTS, getAuthHeaders } from '@/lib/api'
+
 import {
   Command,
   CommandInput,
@@ -23,34 +23,52 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
-
-  const debouncedQuery = useDebounce(query, 400)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    const fetchResults = async () => {
-      if (debouncedQuery.length < 3) {
-        setResults([])
-        setIsOpen(false)
-        return
-      }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
 
+    if (query.length < 3) {
+      setResults([])
+      setIsOpen(false)
+      return
+    }
+
+    debounceRef.current = setTimeout(async () => {
       setLoading(true)
       setError(null)
       setIsOpen(true)
 
       try {
-        const data = await searchDiscogs(debouncedQuery)
-        setResults(data)
+        const res = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(),
+            'x-client-info': 'vite-client', 
+          },
+          body: JSON.stringify({ q: query }),
+        })
+
+        if (!res.ok) {
+          const err = await res.text()
+          throw new Error(`Erro ${res.status}: ${err}`)
+        }
+
+        const data = await res.json()
+        setResults(data.results || [])
       } catch (err: any) {
-        setError(err.message || 'Ocorreu um erro na busca.')
+        console.error('Erro na busca Discogs:', err)
+        setError(err.message || 'Falha na comunicação com o servidor.')
         setResults([])
       } finally {
         setLoading(false)
       }
-    }
+    }, 400)
 
-    fetchResults()
-  }, [debouncedQuery])
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [query])
 
   const handleSelect = useCallback(
     (result: DiscogsSearchResult) => {
@@ -59,7 +77,7 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
       setResults([])
       setIsOpen(false)
     },
-    [onSelect],
+    [onSelect]
   )
 
   return (
@@ -80,12 +98,9 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
               </div>
             )}
             {error && <CommandEmpty>{error}</CommandEmpty>}
-            {!loading &&
-              !error &&
-              results.length === 0 &&
-              debouncedQuery.length >= 3 && (
-                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-              )}
+            {!loading && !error && results.length === 0 && query.length >= 3 && (
+              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+            )}
             {!loading && !error && results.length > 0 && (
               <CommandGroup>
                 {results.map((result) => (
@@ -106,7 +121,7 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
                         {result.albumTitle}
                       </span>
                       <span className="text-sm text-muted-foreground truncate">
-                        {result.artist} {result.year && `(${result.year})`}
+                        {result.artist} {result.year && `• ${result.year}`}
                       </span>
                     </div>
                   </CommandItem>

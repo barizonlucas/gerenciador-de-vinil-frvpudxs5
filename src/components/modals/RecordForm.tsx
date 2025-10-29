@@ -5,7 +5,7 @@ import { VinylRecord } from '@/types/vinyl'
 import { Button } from '@/components/ui/button'
 import { parseISO, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Form,
   FormControl,
@@ -28,12 +28,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Calendar } from '../ui/calendar'
-import { DiscogsSearch } from '../DiscogsSearch'
-import { DiscogsSearchResult } from '@/types/discogs'
 import { Separator } from '../ui/separator'
+import { useDiscogsSearch } from '@/hooks/use-discogs-search'
+import { DiscogsSearchResult } from '@/types/discogs'
 
 const currentYear = new Date().getFullYear()
 
@@ -91,6 +91,10 @@ export const RecordForm = ({
     },
   })
 
+  // Hook de busca Discogs
+  const { query, setQuery, results, loading } = useDiscogsSearch()
+  const [showResults, setShowResults] = useState(false)
+
   useEffect(() => {
     if (initialData) {
       form.reset({
@@ -113,14 +117,16 @@ export const RecordForm = ({
     form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
     form.setValue('artist', result.artist, { shouldValidate: true })
     if (result.year) {
-      form.setValue('releaseYear', parseInt(result.year, 10), {
-        shouldValidate: true,
-      })
+      form.setValue('releaseYear', parseInt(result.year, 10), { shouldValidate: true })
     }
     if (result.genre) {
-      form.setValue('genre', result.genre)
+      form.setValue('genre', Array.isArray(result.genre) ? result.genre.join(', ') : result.genre)
     }
-    form.setValue('coverArtUrl', result.coverArtUrl)
+    if (result.coverArtUrl) {
+      form.setValue('coverArtUrl', result.coverArtUrl)
+    }
+    setShowResults(false)
+    setQuery('')
   }
 
   const handleSubmit = (data: RecordFormValues) => {
@@ -146,15 +152,74 @@ export const RecordForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {/* BUSCA RÁPIDA - APENAS NO CADASTRO */}
         {!initialData && (
           <>
             <FormItem>
-              <FormLabel>Busca Rápida</FormLabel>
-              <DiscogsSearch onSelect={handleDiscogsSelect} />
+              <FormLabel>Buscar no Discogs</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="Digite banda ou álbum..."
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value)
+                      setShowResults(true)
+                    }}
+                    onFocus={() => results.length > 0 && setShowResults(true)}
+                  />
+                  {loading && (
+                    <div className="absolute right-3 top-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {/* Dropdown de resultados */}
+                  {showResults && results.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-lg">
+                      <ul className="max-h-60 overflow-auto p-1">
+                        {results.map((result) => (
+                          <li
+                            key={result.id}
+                            className="flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-accent cursor-pointer"
+                            onClick={() => handleDiscogsSelect(result)}
+                          >
+                            {result.coverArtUrl ? (
+                              <img
+                                src={result.coverArtUrl}
+                                alt={result.albumTitle}
+                                className="h-10 w-10 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
+                                <span className="text-xs">Sem capa</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {result.albumTitle}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {result.artist} • {result.year}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {showResults && query && results.length === 0 && !loading && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover p-3 text-center text-sm text-muted-foreground">
+                      Nenhum resultado encontrado
+                    </div>
+                  )}
+                </div>
+              </FormControl>
             </FormItem>
             <Separator className="my-6" />
           </>
         )}
+
+        {/* RESTANTE DO FORMULÁRIO (igual antes) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -183,6 +248,7 @@ export const RecordForm = ({
             )}
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -197,9 +263,7 @@ export const RecordForm = ({
                     {...field}
                     value={field.value ?? ''}
                     onChange={(e) =>
-                      field.onChange(
-                        e.target.value === '' ? undefined : e.target.value,
-                      )
+                      field.onChange(e.target.value === '' ? undefined : e.target.value)
                     }
                   />
                 </FormControl>
@@ -214,17 +278,14 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Gênero</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="e.g., Rock"
-                    {...field}
-                    value={field.value ?? ''}
-                  />
+                  <Input placeholder="e.g., Rock" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
         <FormField
           control={form.control}
           name="coverArtUrl"
@@ -243,6 +304,7 @@ export const RecordForm = ({
             </FormItem>
           )}
         />
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
@@ -250,24 +312,18 @@ export const RecordForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Condição</FormLabel>
-                <Select
-                  value={field.value ?? ''}
-                  onValueChange={field.onChange}
-                  aria-label="Condição do vinil"
-                >
+                <Select value={field.value ?? ''} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(
-                      (c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ),
-                    )}
+                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -289,12 +345,9 @@ export const RecordForm = ({
                           'w-full pl-3 text-left font-normal',
                           !field.value && 'text-muted-foreground',
                         )}
-                        aria-label={`Selecionar data da compra${field.value ? `, selecionada: ${format(field.value, 'dd/MM/yyyy')}` : ''}`}
                       >
                         {field.value ? (
-                          format(field.value, 'PPP', {
-                            locale: ptBR,
-                          })
+                          format(field.value, 'PPP', { locale: ptBR })
                         ) : (
                           <span>Escolha</span>
                         )}
@@ -328,7 +381,6 @@ export const RecordForm = ({
                     placeholder="e.g., 25.50"
                     {...field}
                     value={field.value ?? ''}
-                    aria-describedby="price-help"
                   />
                 </FormControl>
                 <FormMessage />
@@ -336,6 +388,7 @@ export const RecordForm = ({
             )}
           />
         </div>
+
         <FormField
           control={form.control}
           name="notes"
@@ -353,6 +406,7 @@ export const RecordForm = ({
             </FormItem>
           )}
         />
+
         <div className="flex justify-end gap-4 pt-4">
           <Button
             type="button"
