@@ -120,13 +120,14 @@ export const RecordForm = ({
       form.setValue('releaseYear', parseInt(result.year, 10), { shouldValidate: true })
     }
     if (result.genre) {
-      form.setValue('genre', Array.isArray(result.genre) ? result.genre.join(', ') : result.genre)
+      const genreStr = Array.isArray(result.genre) ? result.genre.join(', ') : result.genre
+      form.setValue('genre', genreStr)
     }
     if (result.coverArtUrl) {
       form.setValue('coverArtUrl', result.coverArtUrl)
     }
+    setQuery(result.albumTitle) // mantém no input
     setShowResults(false)
-    setQuery('')
   }
 
   const handleSubmit = (data: RecordFormValues) => {
@@ -154,57 +155,84 @@ export const RecordForm = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {/* BUSCA RÁPIDA - APENAS NO CADASTRO */}
         {!initialData && (
-          <>
-            <FormItem>
-              <FormLabel>Encontre seu disco</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    placeholder="Digite banda ou álbum..."
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value)
-                      setShowResults(true)
-                    }}
-                    onFocus={() => results.length > 0 && setShowResults(true)}
-                  />
-                  {loading && (
-                    <div className="absolute right-3 top-3">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
-                  {/* Dropdown de resultados */}
-                  {showResults && results.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-lg">
-                      <ul className="max-h-60 overflow-auto p-1">
-                        {results.length > 0 ? (
-                          results.map((result) => (
-                            <li key={result.id}>
-                              <img src={result.coverArtUrl} alt={result.albumTitle} width={50} />
-                              <div>
-                                <strong>{result.albumTitle}</strong>
-                                <br />
-                                <small>{result.artist} ({result.year}) — {result.format}</small>
-                              </div>
-                            </li>
-                          ))
+          <FormItem>
+            <FormLabel>Encontre seu disco</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input
+                  placeholder="Digite banda ou álbum..."
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value)
+                    setShowResults(true)
+                  }}
+                  onFocus={() => setShowResults(true)}
+                  className="pr-10"
+                />
+                {loading && (
+                  <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+            </FormControl>
+
+            {/* Dropdown SEM Popover — foco livre */}
+            {showResults && (
+              <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
+                {loading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="ml-2 text-sm">Buscando...</span>
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    Nenhum resultado encontrado
+                  </div>
+                ) : (
+                  <ul className="max-h-60 overflow-auto">
+                    {results.map((result) => (
+                      <li
+                        key={result.id}
+                        onClick={() => {
+                          handleDiscogsSelect(result)
+                          setShowResults(false)
+                        }}
+                        className="flex items-center gap-3 p-3 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleDiscogsSelect(result)
+                            setShowResults(false)
+                          }
+                        }}
+                      >
+                        {result.thumb ? (
+                          <img
+                            src={result.thumb}
+                            alt={result.albumTitle}
+                            className="h-12 w-12 rounded object-cover"
+                          />
                         ) : (
-                          <p>Nenhum resultado encontrado</p>
+                          <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                            <span className="text-xs">?</span>
+                          </div>
                         )}
-                      </ul>
-                    </div>
-                  )}
-                  {showResults && query && results.length === 0 && !loading && (
-                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover p-3 text-center text-sm text-muted-foreground">
-                      Nenhum resultado encontrado
-                    </div>
-                  )}
-                </div>
-              </FormControl>
-            </FormItem>
-            <Separator className="my-6" />
-          </>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{result.albumTitle}</p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {result.artist} {result.year && `(${result.year})`}
+                            {result.format && ` — ${result.format}`}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            <FormMessage />
+          </FormItem>
         )}
+        <Separator className="my-6" />
 
         {/* RESTANTE DO FORMULÁRIO (igual antes) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,6 +319,18 @@ export const RecordForm = ({
             </FormItem>
           )}
         />
+        {form.watch('coverArtUrl') && (
+          <div className="mt-2 -mb-2">
+            <img
+              src={form.watch('coverArtUrl')}
+              alt="Pré-visualização da capa"
+              className="h-40 w-40 object-cover rounded-md shadow-md border"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
