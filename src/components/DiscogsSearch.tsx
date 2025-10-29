@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DiscogsSearchResult } from '@/types/discogs'
-import { ENDPOINTS, getAuthHeaders } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/api'
 
 import {
   Command,
@@ -43,8 +43,10 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
         const res = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
           method: 'POST',
           headers: {
-            ...getAuthHeaders(),
-            'x-client-info': 'vite-client', 
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'x-client-info': 'vite-client',
           },
           body: JSON.stringify({ q: query }),
         })

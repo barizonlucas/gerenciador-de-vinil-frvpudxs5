@@ -156,7 +156,7 @@ export const RecordForm = ({
         {!initialData && (
           <>
             <FormItem>
-              <FormLabel>Buscar no Discogs</FormLabel>
+              <FormLabel>Encontre seu disco</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
@@ -177,33 +177,20 @@ export const RecordForm = ({
                   {showResults && results.length > 0 && (
                     <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-lg">
                       <ul className="max-h-60 overflow-auto p-1">
-                        {results.map((result) => (
-                          <li
-                            key={result.id}
-                            className="flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-accent cursor-pointer"
-                            onClick={() => handleDiscogsSelect(result)}
-                          >
-                            {result.coverArtUrl ? (
-                              <img
-                                src={result.coverArtUrl}
-                                alt={result.albumTitle}
-                                className="h-10 w-10 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
-                                <span className="text-xs">Sem capa</span>
+                        {results.length > 0 ? (
+                          results.map((result) => (
+                            <li key={result.id}>
+                              <img src={result.coverArtUrl} alt={result.albumTitle} width={50} />
+                              <div>
+                                <strong>{result.albumTitle}</strong>
+                                <br />
+                                <small>{result.artist} ({result.year}) — {result.format}</small>
                               </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {result.albumTitle}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {result.artist} • {result.year}
-                              </p>
-                            </div>
-                          </li>
-                        ))}
+                            </li>
+                          ))
+                        ) : (
+                          <p>Nenhum resultado encontrado</p>
+                        )}
                       </ul>
                     </div>
                   )}
