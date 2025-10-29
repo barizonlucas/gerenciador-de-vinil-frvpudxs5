@@ -117,10 +117,15 @@ export const RecordForm = ({
     form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
     form.setValue('artist', result.artist, { shouldValidate: true })
     if (result.year) {
-      form.setValue('releaseYear', parseInt(result.year, 10), { shouldValidate: true })
+      form.setValue('releaseYear', parseInt(result.year, 10), {
+        shouldValidate: true,
+      })
     }
     if (result.genre) {
-      form.setValue('genre', Array.isArray(result.genre) ? result.genre.join(', ') : result.genre)
+      form.setValue(
+        'genre',
+        Array.isArray(result.genre) ? result.genre.join(', ') : result.genre,
+      )
     }
     if (result.coverArtUrl) {
       form.setValue('coverArtUrl', result.coverArtUrl)
@@ -180,11 +185,18 @@ export const RecordForm = ({
                         {results.length > 0 ? (
                           results.map((result) => (
                             <li key={result.id}>
-                              <img src={result.coverArtUrl} alt={result.albumTitle} width={50} />
+                              <img
+                                src={result.coverArtUrl}
+                                alt={result.albumTitle}
+                                width={50}
+                              />
                               <div>
                                 <strong>{result.albumTitle}</strong>
                                 <br />
-                                <small>{result.artist} ({result.year}) — {result.format}</small>
+                                <small>
+                                  {result.artist} ({result.year}) —{' '}
+                                  {result.format}
+                                </small>
                               </div>
                             </li>
                           ))
@@ -250,7 +262,9 @@ export const RecordForm = ({
                     {...field}
                     value={field.value ?? ''}
                     onChange={(e) =>
-                      field.onChange(e.target.value === '' ? undefined : e.target.value)
+                      field.onChange(
+                        e.target.value === '' ? undefined : e.target.value,
+                      )
                     }
                   />
                 </FormControl>
@@ -265,7 +279,11 @@ export const RecordForm = ({
               <FormItem>
                 <FormLabel>Gênero</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Rock" {...field} value={field.value ?? ''} />
+                  <Input
+                    placeholder="e.g., Rock"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -299,18 +317,23 @@ export const RecordForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Condição</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                <Select
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
+                    {['Novo', 'Excelente', 'Bom', 'Regular', 'Ruim'].map(
+                      (c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -3,6 +3,6 @@ export interface DiscogsSearchResult {
   albumTitle: string
   artist: string
   year?: string
-  genre?: string  
+  genre?: string
   coverArtUrl?: string
 }

@@ -79,7 +79,7 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
       setResults([])
       setIsOpen(false)
     },
-    [onSelect]
+    [onSelect],
   )
 
   return (
@@ -100,9 +100,12 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
               </div>
             )}
             {error && <CommandEmpty>{error}</CommandEmpty>}
-            {!loading && !error && results.length === 0 && query.length >= 3 && (
-              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-            )}
+            {!loading &&
+              !error &&
+              results.length === 0 &&
+              query.length >= 3 && (
+                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+              )}
             {!loading && !error && results.length > 0 && (
               <CommandGroup>
                 {results.map((result) => (
