@@ -15,10 +15,31 @@ import { ThemeToggle } from './ThemeToggle'
 import { cn } from '@/lib/utils'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+import { toast } from 'sonner'
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth()
   const { openAddModal, openAddByPhotoModal } = useVinylContext()
+
+  const handleOpenCameraClick = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      stream.getTracks().forEach((track) => track.stop())
+      openAddByPhotoModal()
+    } catch (err: any) {
+      if (
+        err.name === 'NotAllowedError' ||
+        err.name === 'PermissionDeniedError'
+      ) {
+        toast.error(
+          'Não foi possível acessar a câmera. Por favor, verifique as permissões nas configurações do seu dispositivo.',
+        )
+      } else {
+        console.error('Error accessing camera:', err)
+        toast.error('Ocorreu um erro ao tentar acessar a câmera.')
+      }
+    }
+  }
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -57,7 +78,7 @@ export const Header = () => {
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={openAddByPhotoModal} size="icon">
+              <Button onClick={handleOpenCameraClick} size="icon">
                 <Camera className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
