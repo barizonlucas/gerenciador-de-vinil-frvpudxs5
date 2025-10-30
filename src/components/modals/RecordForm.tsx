@@ -5,7 +5,8 @@ import { VinylRecord } from '@/types/vinyl'
 import { Button } from '@/components/ui/button'
 import { parseISO, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+
 import {
   Form,
   FormControl,
@@ -34,6 +35,7 @@ import { Calendar } from '../ui/calendar'
 import { Separator } from '../ui/separator'
 import { useDiscogsSearch } from '@/hooks/use-discogs-search'
 import { DiscogsSearchResult } from '@/types/discogs'
+import { toast } from 'sonner'
 
 const currentYear = new Date().getFullYear()
 
@@ -91,6 +93,29 @@ export const RecordForm = ({
     },
   })
 
+  const [isSubmitting, setIsSubmitting] = useState<null | 'save' | 'continue'>(null)
+  // null = idle, 'save' = clicou Salvar, 'continue' = clicou Salvar e Continuar
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const buildPayload = (data: RecordFormValues): Omit<VinylRecord, 'id' | 'user_id'> => {
+    const purchaseDateString = data.purchaseDate
+        ? format(data.purchaseDate, 'yyyy-MM-dd')
+        : undefined
+
+    return {
+      albumTitle: data.albumTitle.trim(),
+      artist: data.artist.trim(),
+      releaseYear: data.releaseYear,
+      condition: data.condition,
+      genre: data.genre?.trim() || undefined,
+      coverArtUrl: data.coverArtUrl || undefined,
+      purchaseDate: purchaseDateString,
+      price: typeof data.price === 'number' ? data.price : undefined,
+      notes: data.notes?.trim() || undefined,
+    }
+  }
+
   // Hook de busca Discogs
   const { query, setQuery, results, loading } = useDiscogsSearch()
   const [showResults, setShowResults] = useState(false)
@@ -114,47 +139,68 @@ export const RecordForm = ({
   }, [initialData, form])
 
   const handleDiscogsSelect = (result: DiscogsSearchResult) => {
-    form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
-    form.setValue('artist', result.artist, { shouldValidate: true })
-    if (result.year) {
-      form.setValue('releaseYear', parseInt(result.year, 10), {
-        shouldValidate: true,
-      })
+      form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
+      form.setValue('artist', result.artist, { shouldValidate: true })
+      if (result.year) {
+        form.setValue('releaseYear', parseInt(result.year, 10), {
+          shouldValidate: true,
+        })
+      }
+      if (result.genre) {
+        const genreStr = Array.isArray(result.genre) ? result.genre.join(', ') : result.genre
+        form.setValue('genre', genreStr)
+      }
+      if (result.coverArtUrl) {
+        form.setValue('coverArtUrl', result.coverArtUrl)
+      }
+      setQuery(result.albumTitle) // mantém no input
+      setShowResults(false)
     }
-    if (result.genre) {
-      const genreStr = Array.isArray(result.genre) ? result.genre.join(', ') : result.genre
-      form.setValue('genre', genreStr)
+
+  const handleSubmit = async (
+    data: RecordFormValues,
+    mode: 'save' | 'continue',
+  ) => {
+    setIsSubmitting(mode)
+    const payload = buildPayload(data)
+
+    try {
+      await onSubmit(payload)
+
+      toast.success('Disco adicionado!')
+
+      if (mode === 'continue') {
+        // fluxo: Salvar e Continuar
+        form.reset()
+        setQuery('')
+        // foco de volta no campo de busca
+        // Garante que o input existe no próximo ciclo de renderização
+        requestAnimationFrame(() => {
+          setTimeout(() => inputRef.current?.focus(), 0)
+        })
+      }
+
+      if (mode === 'save') {
+        // fluxo: Salvar (fecha modal)
+        onCancel()
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao salvar o disco.')
+      // mantém os dados no form
+    } finally {
+      // sempre roda, com sucesso ou erro
+      setIsSubmitting(null)
     }
-    if (result.coverArtUrl) {
-      form.setValue('coverArtUrl', result.coverArtUrl)
-    }
-    setQuery(result.albumTitle) // mantém no input
-    setShowResults(false)
   }
 
-  const handleSubmit = (data: RecordFormValues) => {
-    const purchaseDateString = data.purchaseDate
-      ? format(data.purchaseDate, 'yyyy-MM-dd')
-      : undefined
-
-    const payload: Omit<VinylRecord, 'id' | 'user_id'> = {
-      albumTitle: data.albumTitle.trim(),
-      artist: data.artist.trim(),
-      releaseYear: data.releaseYear,
-      condition: data.condition,
-      genre: data.genre?.trim() || undefined,
-      coverArtUrl: data.coverArtUrl || undefined,
-      purchaseDate: purchaseDateString,
-      price: typeof data.price === 'number' ? data.price : undefined,
-      notes: data.notes?.trim() || undefined,
-    }
-
-    onSubmit(payload)
+  const submitForm = (mode: 'save' | 'continue') => {
+    form.handleSubmit((data) => handleSubmit(data, mode))()
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
         {/* BUSCA RÁPIDA - APENAS NO CADASTRO */}
         {!initialData && (
           <FormItem>
@@ -162,6 +208,7 @@ export const RecordForm = ({
             <FormControl>
               <div className="relative">
                 <Input
+                  ref={inputRef}
                   placeholder="Digite banda ou álbum..."
                   value={query}
                   onChange={(e) => {
@@ -448,17 +495,55 @@ export const RecordForm = ({
         />
 
         <div className="flex justify-end gap-4 pt-4">
+          {/* 1. Voltar */}
           <Button
             type="button"
             variant="outline"
             onClick={() => {
-              form.reset()
+              // fecha sem salvar
               onCancel()
             }}
+            disabled={isSubmitting !== null}
           >
-            Cancelar
+            Voltar
           </Button>
-          <Button type="submit">{submitButtonText}</Button>
+
+          {/* 2. Salvar */}
+          <Button
+            type="button"
+            onClick={() => {
+              submitForm('save')
+            }}
+            disabled={isSubmitting !== null}
+          >
+            {isSubmitting === 'save' ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar'
+            )}
+          </Button>
+
+          {/* 3. Salvar e Continuar */}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              submitForm('continue')
+            }}
+            disabled={isSubmitting !== null}
+          >
+            {isSubmitting === 'continue' ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar e Continuar'
+            )}
+          </Button>
         </div>
       </form>
     </Form>

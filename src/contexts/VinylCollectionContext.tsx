@@ -38,9 +38,8 @@ export const VinylCollectionProvider = ({
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-lg">
           <RecordForm
-            onSubmit={async (data) => {
-              await collection.addRecord(data)
-              setIsAddModalOpen(false)
+            onSubmit={(data) => {
+              return collection.addRecord(data)
             }}
             onCancel={closeAddModal}
             submitButtonText="Adicionar"
