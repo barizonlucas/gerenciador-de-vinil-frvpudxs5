@@ -122,7 +122,9 @@ export const RecordForm = ({
       })
     }
     if (result.genre) {
-      const genreStr = Array.isArray(result.genre) ? result.genre.join(', ') : result.genre
+      const genreStr = Array.isArray(result.genre)
+        ? result.genre.join(', ')
+        : result.genre
       form.setValue('genre', genreStr)
     }
     if (result.coverArtUrl) {
@@ -219,7 +221,9 @@ export const RecordForm = ({
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{result.albumTitle}</p>
+                          <p className="font-medium truncate">
+                            {result.albumTitle}
+                          </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {result.artist} {result.year && `(${result.year})`}
                             {result.format && ` — ${result.format}`}
