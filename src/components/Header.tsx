@@ -57,11 +57,7 @@ export const Header = () => {
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                onClick={openAddByPhotoModal}
-                variant="outline"
-                size="icon"
-              >
+              <Button onClick={openAddByPhotoModal} size="icon">
                 <Camera className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
