@@ -136,7 +136,7 @@ export const AddRecordByPhotoModal = ({
       case 'searching':
       case 'saving':
       case 'success':
-      case 'error':
+      case 'error': {
         const messages = {
           identifying: 'Reconhecendo capa...',
           searching: 'Buscando detalhes...',
@@ -179,6 +179,7 @@ export const AddRecordByPhotoModal = ({
             )}
           </div>
         )
+      }
       default:
         return null
     }
