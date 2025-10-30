@@ -8,7 +8,9 @@ interface DiscogsResult {
   title: string
   year?: string
   cover_image: string
+  thumb: string
   genre: string[]
+  format: string[]
 }
 
 Deno.serve(async (req) => {
@@ -17,12 +19,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json()
-    if (!query) {
-      return new Response(JSON.stringify({ error: 'Query is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    const { q, artist, album_title, type = 'release' } = await req.json()
+
+    let searchQuery = q
+    if (!searchQuery && artist && album_title) {
+      searchQuery = `${artist} ${album_title}`
+    }
+
+    if (!searchQuery) {
+      return new Response(
+        JSON.stringify({ error: 'Search query is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const discogsKey = Deno.env.get('DISCOGS_KEY')
@@ -32,10 +43,12 @@ Deno.serve(async (req) => {
       throw new Error('Discogs API credentials are not set.')
     }
 
+    const perPage = type === 'master' ? '1' : '10'
+
     const searchParams = new URLSearchParams({
-      q: query,
-      type: 'release',
-      per_page: '10',
+      q: searchQuery,
+      type: type,
+      per_page: perPage,
     })
 
     const response = await fetch(`${DISCOGS_API_URL}?${searchParams}`, {
@@ -52,22 +65,27 @@ Deno.serve(async (req) => {
     const data = await response.json()
 
     const formattedResults = data.results.map((item: DiscogsResult) => {
-      const [artist, ...titleParts] = item.title.split(' - ')
-      const albumTitle = titleParts.join(' - ')
+      const [itemArtist, ...titleParts] = item.title.split(' - ')
+      const itemAlbumTitle = titleParts.join(' - ')
       return {
         id: item.id,
-        artist: artist?.trim(),
-        albumTitle: albumTitle?.trim() || artist?.trim(), // Handle cases with no album title
+        artist: itemArtist?.trim(),
+        albumTitle: itemAlbumTitle?.trim() || itemArtist?.trim(),
         year: item.year,
+        thumb: item.thumb,
         coverArtUrl: item.cover_image,
         genre: item.genre?.[0],
+        format:
+          item.format?.find((f) => f.toLowerCase().includes('vinyl')) ||
+          item.format?.[0],
       }
     })
 
-    return new Response(JSON.stringify(formattedResults), {
+    return new Response(JSON.stringify({ results: formattedResults }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
+    console.error('Error in search-discogs:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

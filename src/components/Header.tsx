@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { LogOut, User as UserIcon, Plus, DiscAlbum } from 'lucide-react'
+import { LogOut, User as UserIcon, Plus, DiscAlbum, Camera } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   DropdownMenu,
@@ -14,10 +14,11 @@ import { Button } from './ui/button'
 import { ThemeToggle } from './ThemeToggle'
 import { cn } from '@/lib/utils'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth()
-  const { openAddModal } = useVinylContext()
+  const { openAddModal, openAddByPhotoModal } = useVinylContext()
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -50,10 +51,24 @@ export const Header = () => {
             Perfil
           </NavLink>
         </nav>
-        <div className="flex flex-1 items-center justify-end gap-4">
+        <div className="flex flex-1 items-center justify-end gap-2">
           <Button onClick={openAddModal}>
             <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
           </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={openAddByPhotoModal}
+                variant="outline"
+                size="icon"
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Adicionar por foto</p>
+            </TooltipContent>
+          </Tooltip>
           <ThemeToggle />
           {user && (
             <DropdownMenu>
