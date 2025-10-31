@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DiscogsSearchResult } from '@/types/discogs'
-import { ENDPOINTS } from '@/lib/api'
+import { useDiscogsSearch } from '@/hooks/use-discogs-search'
 
 import {
   Command,
@@ -18,124 +18,115 @@ interface DiscogsSearchProps {
 }
 
 export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<DiscogsSearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { query, setQuery, results, loading, error: searchError } =
+    useDiscogsSearch()
   const [isOpen, setIsOpen] = useState(false)
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = query.trim()
+    const hasQuery = trimmed.length >= 3
+    const hasResults = results.length > 0
+    const message =
+      searchError ||
+      (!loading && hasQuery && !hasResults ? 'Nenhum resultado encontrado.' : null)
 
-    if (query.length < 3) {
-      setResults([])
-      setIsOpen(false)
-      return
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      setError(null)
-      setIsOpen(true)
-
-      try {
-        const res = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'x-client-info': 'vite-client',
-          },
-          body: JSON.stringify({ q: query }),
-        })
-
-        if (!res.ok) {
-          const err = await res.text()
-          throw new Error(`Erro ${res.status}: ${err}`)
-        }
-
-        const data = await res.json()
-        setResults(data.results || [])
-      } catch (err: any) {
-        console.error('Erro na busca Discogs:', err)
-        setError(err.message || 'Falha na comunicação com o servidor.')
-        setResults([])
-      } finally {
-        setLoading(false)
-      }
-    }, 400)
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [query])
+    const shouldOpen = hasQuery && (loading || hasResults || !!message)
+    setIsOpen(shouldOpen)
+  }, [query, loading, results, searchError])
 
   const handleSelect = useCallback(
     (result: DiscogsSearchResult) => {
       onSelect(result)
       setQuery('')
-      setResults([])
       setIsOpen(false)
     },
-    [onSelect],
+    [onSelect, setQuery],
   )
 
   return (
-    <Command shouldFilter={false} className="relative">
-      <CommandInput
-        value={query}
-        onValueChange={setQuery}
-        placeholder="Nome do álbum ou artista..."
-        onFocus={() => query.length >= 3 && setIsOpen(true)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
-      />
-      {isOpen && (
-        <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
-          <CommandList>
-            {loading && (
-              <div className="p-4 flex justify-center items-center">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            )}
-            {error && <CommandEmpty>{error}</CommandEmpty>}
-            {!loading &&
-              !error &&
-              results.length === 0 &&
-              query.length >= 3 && (
-                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+    <div ref={containerRef} className="relative">
+      <Command shouldFilter={false}>
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Nome do álbum ou artista..."
+          onFocus={() => query.trim().length >= 3 && results.length > 0 && setIsOpen(true)}
+          onBlur={(event) => {
+            // Delay close to allow click in list
+            requestAnimationFrame(() => {
+              if (
+                containerRef.current &&
+                event.relatedTarget &&
+                containerRef.current.contains(event.relatedTarget as Node)
+              ) {
+                return
+              }
+              setIsOpen(false)
+            })
+          }}
+        />
+        {isOpen && (
+          <div
+            className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-80 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-lg focus:outline-none"
+            role="listbox"
+            onMouseDown={(event) => {
+              // Prevent closing when clicking inside
+              event.preventDefault()
+            }}
+          >
+            <CommandList>
+              {loading && (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
               )}
-            {!loading && !error && results.length > 0 && (
-              <CommandGroup>
-                {results.map((result) => (
-                  <CommandItem
-                    key={result.id}
-                    onSelect={() => handleSelect(result)}
-                    className="flex items-center gap-3 cursor-pointer"
-                  >
-                    <Avatar className="h-10 w-10 rounded-sm">
-                      <AvatarImage
-                        src={result.coverArtUrl}
-                        alt={result.albumTitle}
-                      />
-                      <AvatarFallback className="rounded-sm">?</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-medium truncate">
-                        {result.albumTitle}
-                      </span>
-                      <span className="text-sm text-muted-foreground truncate">
-                        {result.artist} {result.year && `• ${result.year}`}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </div>
-      )}
-    </Command>
+              {searchError && !loading && (
+                <CommandEmpty className="p-4 text-sm text-muted-foreground">
+                  {searchError}
+                </CommandEmpty>
+              )}
+              {!loading && !searchError && results.length > 0 && (
+                <CommandGroup>
+                  {results.map((result) => (
+                    <CommandItem
+                      key={result.id}
+                      onSelect={() => handleSelect(result)}
+                      className="flex cursor-pointer items-center gap-3"
+                    >
+                      <Avatar className="h-10 w-10 rounded-sm">
+                        <AvatarImage
+                          src={result.coverArtUrl}
+                          alt={result.albumTitle}
+                        />
+                        <AvatarFallback className="rounded-sm">
+                          ?
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="truncate font-medium">
+                          {result.albumTitle}
+                        </span>
+                        <span className="truncate text-sm text-muted-foreground">
+                          {result.artist} {result.year && `• ${result.year}`}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              {!loading &&
+                !searchError &&
+                results.length === 0 &&
+                query.trim().length >= 3 && (
+                <CommandEmpty className="p-4 text-sm text-muted-foreground">
+                  Nenhum resultado encontrado.
+                </CommandEmpty>
+              )}
+            </CommandList>
+          </div>
+        )}
+      </Command>
+    </div>
   )
 }
