@@ -21,6 +21,14 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
   >('checking')
   const [permissionError, setPermissionError] = useState<string | null>(null)
 
+  const stopStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setIsReady(false)
+  }, [])
+
   const startCamera = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('MEDIA_DEVICES_UNAVAILABLE')
@@ -331,7 +339,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
         streamRef.current.getTracks().forEach((track) => track.stop())
         streamRef.current = null
       }
-      setIsReady(false)
+      stopStream()
     }
   }
 
@@ -355,12 +363,23 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
     canvasRef.current?.toBlob(
       (blob) => {
         if (blob) {
+          // desliga câmera ANTES de avisar o pai (segurança / privacidade)
+          stopStream()
           onCapture(blob)
         }
       },
       'image/jpeg',
       0.9,
     )
+  }
+
+  const handleClose = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setIsReady(false)
+    onClose()
   }
 
   return (
@@ -402,7 +421,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
                 >
                   Permitir acesso
                 </Button>
-                <Button className="w-full" variant="outline" onClick={onClose}>
+                <Button className="w-full" variant="outline" onClick={handleClose}>
                   Agora não
                 </Button>
               </>
@@ -413,7 +432,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Solicitando...
                 </Button>
-                <Button className="w-full" variant="outline" onClick={onClose}>
+                <Button className="w-full" variant="outline" onClick={handleClose}>
                   Cancelar
                 </Button>
               </>
@@ -457,7 +476,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 text-white bg-black/30 hover:bg-black/50"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <X className="h-6 w-6" />
       </Button>
