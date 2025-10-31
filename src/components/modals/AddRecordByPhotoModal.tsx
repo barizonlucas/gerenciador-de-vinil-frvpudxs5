@@ -89,7 +89,7 @@ export const AddRecordByPhotoModal = ({
         identified.artist!,
         identified.album_title!,
       )
-
+      
       if (!discogsResult) {
         throw new Error('Não encontramos uma correspondência exata no Discogs.')
       }

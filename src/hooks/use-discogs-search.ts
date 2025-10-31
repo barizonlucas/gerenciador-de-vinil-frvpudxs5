@@ -36,34 +36,60 @@ export function useDiscogsSearch() {
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession()
+        const getCurrentToken = async (): Promise<string | null> => {
+          const {
+            data: { session },
+            error: sessionError,
+          } = await supabase.auth.getSession()
+
+          if (sessionError) {
+            console.error('Erro ao obter sessão do Supabase:', sessionError)
+          }
+
+          return session?.access_token ?? null
+        }
+
+        const refreshAccessToken = async (): Promise<string | null> => {
+          const {
+            data: refreshed,
+            error: refreshError,
+          } = await supabase.auth.refreshSession()
+
+          if (refreshError) {
+            console.error('Erro ao atualizar sessão do Supabase:', refreshError)
+            return null
+          }
+
+          return refreshed.session?.access_token ?? null
+        }
+
+        const performRequest = async (token: string) =>
+          fetch(ENDPOINTS.SEARCH_DISCOGS, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ q: trimmedQuery }),
+          })
+
+        let token = await getCurrentToken()
+
+        if (!token) {
+          token = await refreshAccessToken()
+        }
 
         if (requestIdRef.current !== currentRequestId) {
           return
         }
 
-        if (sessionError) {
-          console.error('Erro ao obter sessão do Supabase:', sessionError)
-        }
-
-        const token = session?.access_token
         if (!token) {
           setResults([])
           setError('Sessão expirada. Faça login novamente.')
           return
         }
 
-        const response = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ q: trimmedQuery }),
-        })
+        let response = await performRequest(token)
 
         const contentType = response.headers.get('Content-Type') ?? ''
         let payload: DiscogsSearchResponse | string | null = null
@@ -92,14 +118,53 @@ export function useDiscogsSearch() {
                 : null
 
           if (status === 403) {
-            setError('Sessão expirada. Faça login novamente.')
-          } else if (status >= 500) {
-            setError(extracted || 'Não foi possível buscar no Discogs, tente novamente.')
-          } else {
-            setError(extracted || 'Não foi possível completar a busca.')
+            token = await refreshAccessToken()
+
+            if (requestIdRef.current !== currentRequestId) {
+              return
+            }
+
+            if (token) {
+              response = await performRequest(token)
+              const retryContentType =
+                response.headers.get('Content-Type') ?? ''
+              try {
+                if (retryContentType.includes('application/json')) {
+                  payload = (await response.json()) as DiscogsSearchResponse
+                } else {
+                  payload = await response.text()
+                }
+              } catch (parseErr) {
+                console.error(
+                  'Falha ao interpretar resposta do Discogs após refresh:',
+                  parseErr,
+                )
+              }
+            }
           }
-          setResults([])
-          return
+
+          if (!response.ok) {
+            const statusAfterRetry = response.status
+            const extractedAfterRetry =
+              typeof payload === 'string'
+                ? payload
+                : payload && typeof payload === 'object'
+                  ? payload.error
+                  : null
+
+            if (statusAfterRetry === 403) {
+              setError('Sessão expirada. Faça login novamente.')
+            } else if (statusAfterRetry >= 500) {
+              setError(
+                extractedAfterRetry ||
+                  'Não foi possível buscar no Discogs, tente novamente.',
+              )
+            } else {
+              setError(extractedAfterRetry || 'Não foi possível completar a busca.')
+            }
+            setResults([])
+            return
+          }
         }
 
         if (!payload || typeof payload !== 'object') {
