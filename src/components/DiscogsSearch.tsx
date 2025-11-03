@@ -18,8 +18,13 @@ interface DiscogsSearchProps {
 }
 
 export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
-  const { query, setQuery, results, loading, error: searchError } =
-    useDiscogsSearch()
+  const {
+    query,
+    setQuery,
+    results,
+    loading,
+    error: searchError,
+  } = useDiscogsSearch()
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -29,7 +34,9 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
     const hasResults = results.length > 0
     const message =
       searchError ||
-      (!loading && hasQuery && !hasResults ? 'Nenhum resultado encontrado.' : null)
+      (!loading && hasQuery && !hasResults
+        ? 'Nenhum resultado encontrado.'
+        : null)
 
     const shouldOpen = hasQuery && (loading || hasResults || !!message)
     setIsOpen(shouldOpen)
@@ -51,7 +58,9 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
           value={query}
           onValueChange={setQuery}
           placeholder="Nome do álbum ou artista..."
-          onFocus={() => query.trim().length >= 3 && results.length > 0 && setIsOpen(true)}
+          onFocus={() =>
+            query.trim().length >= 3 && results.length > 0 && setIsOpen(true)
+          }
           onBlur={(event) => {
             // Delay close to allow click in list
             requestAnimationFrame(() => {
@@ -119,10 +128,10 @@ export const DiscogsSearch = ({ onSelect }: DiscogsSearchProps) => {
                 !searchError &&
                 results.length === 0 &&
                 query.trim().length >= 3 && (
-                <CommandEmpty className="p-4 text-sm text-muted-foreground">
-                  Nenhum resultado encontrado.
-                </CommandEmpty>
-              )}
+                  <CommandEmpty className="p-4 text-sm text-muted-foreground">
+                    Nenhum resultado encontrado.
+                  </CommandEmpty>
+                )}
             </CommandList>
           </div>
         )}

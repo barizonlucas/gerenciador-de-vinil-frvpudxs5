@@ -14,6 +14,7 @@ import { ptBR } from 'date-fns/locale'
 import { DiscAlbum } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RecordHistory } from '@/components/RecordHistory'
+import { RecordVersionsList } from '@/components/RecordVersionsList'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -53,9 +54,16 @@ export const ViewRecordModal = ({
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList
+            className={`grid w-full ${
+              record.master_id ? 'grid-cols-3' : 'grid-cols-2'
+            }`}
+          >
             <TabsTrigger value="details">Detalhes</TabsTrigger>
             <TabsTrigger value="history">História</TabsTrigger>
+            {record.master_id && (
+              <TabsTrigger value="versions">Minha Versão</TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="details">
             <div className="grid grid-cols-3 gap-6 py-4">
@@ -115,6 +123,11 @@ export const ViewRecordModal = ({
           <TabsContent value="history">
             <RecordHistory record={record} />
           </TabsContent>
+          {record.master_id && (
+            <TabsContent value="versions">
+              <RecordVersionsList masterId={record.master_id} />
+            </TabsContent>
+          )}
         </Tabs>
 
         <DialogFooter className="gap-2 sm:justify-end pt-4">

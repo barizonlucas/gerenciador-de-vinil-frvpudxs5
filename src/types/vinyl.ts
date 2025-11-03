@@ -10,4 +10,5 @@ export interface VinylRecord {
   purchaseDate?: string // Data da Compra (formato YYYY-MM-DD, opcional)
   price?: number // Preço de Compra (opcional)
   notes?: string // Observações (opcional)
+  master_id?: string | null // Discogs master ID
 }

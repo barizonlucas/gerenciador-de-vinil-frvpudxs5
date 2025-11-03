@@ -50,10 +50,8 @@ export function useDiscogsSearch() {
         }
 
         const refreshAccessToken = async (): Promise<string | null> => {
-          const {
-            data: refreshed,
-            error: refreshError,
-          } = await supabase.auth.refreshSession()
+          const { data: refreshed, error: refreshError } =
+            await supabase.auth.refreshSession()
 
           if (refreshError) {
             console.error('Erro ao atualizar sessão do Supabase:', refreshError)
@@ -160,7 +158,9 @@ export function useDiscogsSearch() {
                   'Não foi possível buscar no Discogs, tente novamente.',
               )
             } else {
-              setError(extractedAfterRetry || 'Não foi possível completar a busca.')
+              setError(
+                extractedAfterRetry || 'Não foi possível completar a busca.',
+              )
             }
             setResults([])
             return

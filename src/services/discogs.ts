@@ -1,93 +1,83 @@
-import { supabase } from '@/lib/supabase/client' // <-- usa o client que você mostrou
-import type { DiscogsSearchResult } from '@/types/discogs'
+import { supabase } from '@/lib/supabase/client'
+import { DiscogsSearchResult } from '@/types/discogs'
 
-const DEFAULT_ERROR_MESSAGE = 'Erro ao buscar informações no Discogs.'
-
-const ENDPOINTS = {
-  SEARCH_DISCOGS:
-    'https://cackmzlupxtgtgyljjqy.supabase.co/functions/v1/search-discogs',
+interface DiscogsSearchResponse {
+  results: DiscogsSearchResult[]
 }
 
-export class SearchDiscogsError extends Error {
-  status?: number
-  constructor(message: string, status?: number) {
-    super(message)
-    this.name = 'SearchDiscogsError'
-    this.status = status
+export interface DiscogsVersion {
+  id: number
+  title: string
+  year: string
+  country: string
+  label: string
+  thumb: string
+  community: {
+    have: number
+    want: number
   }
 }
 
-export async function searchDiscogsMaster(
+export interface DiscogsVersionsResponse {
+  pagination: {
+    page: number
+    pages: number
+    per_page: number
+    items: number
+  }
+  versions: DiscogsVersion[]
+}
+
+export const searchDiscogsMaster = async (
   artist: string,
-  albumTitle: string
-): Promise<DiscogsSearchResult | null> {
-  // 1. pega sessão atual do usuário logado
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession()
+  album_title: string,
+): Promise<DiscogsSearchResult | null> => {
+  const { data, error } =
+    await supabase.functions.invoke<DiscogsSearchResponse>('search-discogs', {
+      body: { artist, album_title, type: 'master' },
+    })
 
   if (error) {
-    console.error('Erro ao obter sessão do Supabase:', error)
+    console.error('Error invoking search-discogs function:', error)
+    throw new Error(error.message || 'Falha ao buscar no Discogs.')
   }
 
-  const token = session?.access_token
-  if (!token) {
-    // Isso alimenta exatamente a mensagem que você já mostra na UI
-    throw new SearchDiscogsError('Sessão expirada. Faça login novamente.', 403)
+  if ((data as any).error) {
+    console.error('Error from search-discogs function:', (data as any).error)
+    throw new Error((data as any).error)
   }
 
-  // 2. monta string de busca
-  const q = `${artist} ${albumTitle}`.trim()
-
-  // 3. chama a edge function
-  let res: Response
-  try {
-    res = await fetch(ENDPOINTS.SEARCH_DISCOGS, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`, // <-- ESSENCIAL
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ q }),
-    })
-  } catch (networkErr) {
-    console.error('Erro de rede ao chamar search-discogs:', networkErr)
-    throw new SearchDiscogsError(DEFAULT_ERROR_MESSAGE)
-  }
-
-  // 4. interpreta resposta
-  const contentType = res.headers.get('Content-Type') ?? ''
-  let payload: any = null
-
-  try {
-    payload = contentType.includes('application/json')
-      ? await res.json()
-      : await res.text()
-  } catch (parseErr) {
-    console.error('Falha ao interpretar resposta da função:', parseErr)
-  }
-
-  if (!res.ok) {
-    const status = res.status
-    let message = DEFAULT_ERROR_MESSAGE
-
-    if (status === 403) {
-      message = 'Sessão expirada. Faça login novamente.'
-    } else if (status >= 500) {
-      message = payload?.error || DEFAULT_ERROR_MESSAGE
-    } else if (status >= 400) {
-      message = payload?.error || 'Não foi possível buscar no Discogs.'
-    }
-
-    throw new SearchDiscogsError(message, status)
-  }
-
-  // payload esperado: { results: [...] }
-  if (!payload || !Array.isArray(payload.results)) {
+  if (!data.results || data.results.length === 0) {
     return null
   }
 
-  // você estava usando só o primeiro resultado
-  return payload.results[0] ?? null
+  return data.results[0]
+}
+
+export const getDiscogsVersions = async (
+  master_id: string,
+  page: number,
+): Promise<DiscogsVersionsResponse> => {
+  const { data, error } =
+    await supabase.functions.invoke<DiscogsVersionsResponse>(
+      'get-discogs-versions',
+      {
+        body: { master_id, page },
+      },
+    )
+
+  if (error) {
+    console.error('Error invoking get-discogs-versions function:', error)
+    throw new Error(error.message || 'Falha ao buscar versões no Discogs.')
+  }
+
+  if ((data as any).error) {
+    console.error(
+      'Error from get-discogs-versions function:',
+      (data as any).error,
+    )
+    throw new Error((data as any).error)
+  }
+
+  return data
 }

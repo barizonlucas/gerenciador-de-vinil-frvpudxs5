@@ -394,11 +394,12 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
                 <span>Verificando permissões...</span>
               </div>
             )}
-            {(permissionState === 'prompt' || permissionState === 'requesting') && (
+            {(permissionState === 'prompt' ||
+              permissionState === 'requesting') && (
               <>
                 <p className="text-sm text-white/80">
-                  Usamos sua câmera só para tirar a foto do seu disco. Nada é salvo sem você
-                  confirmar.
+                  Usamos sua câmera só para tirar a foto do seu disco. Nada é
+                  salvo sem você confirmar.
                 </p>
                 {permissionError && (
                   <p className="text-xs text-red-200">{permissionError}</p>
@@ -415,13 +416,14 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
           <div className="flex w-full max-w-sm flex-col gap-2">
             {permissionState === 'prompt' && (
               <>
-                <Button
-                  className="w-full"
-                  onClick={requestCameraAccess}
-                >
+                <Button className="w-full" onClick={requestCameraAccess}>
                   Permitir acesso
                 </Button>
-                <Button className="w-full" variant="outline" onClick={handleClose}>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={handleClose}
+                >
                   Agora não
                 </Button>
               </>
@@ -432,7 +434,11 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Solicitando...
                 </Button>
-                <Button className="w-full" variant="outline" onClick={handleClose}>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={handleClose}
+                >
                   Cancelar
                 </Button>
               </>

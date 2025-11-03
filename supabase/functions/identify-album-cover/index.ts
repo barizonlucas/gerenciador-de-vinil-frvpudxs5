@@ -89,8 +89,10 @@ Deno.serve(async (req) => {
       .replace(/```/g, '')
       .trim()
 
-    let identifiedData: { artist: string | null; album_title: string | null } | null =
-      null
+    let identifiedData: {
+      artist: string | null
+      album_title: string | null
+    } | null = null
 
     try {
       identifiedData = JSON.parse(jsonString)

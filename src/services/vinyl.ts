@@ -5,6 +5,14 @@ import { TablesInsert, TablesUpdate } from '@/lib/supabase/types'
 type VinylRecordInsert = TablesInsert<'vinyl_records'>
 type VinylRecordUpdate = TablesUpdate<'vinyl_records'>
 
+const mapRecord = (record: any): VinylRecord => ({
+  ...record,
+  albumTitle: record.albumTitle,
+  artist: record.artist,
+  condition: (record.condition as VinylRecord['condition']) || undefined,
+  master_id: record.master_id,
+})
+
 export const getRecords = async (): Promise<VinylRecord[]> => {
   const { data, error } = await supabase
     .from('vinyl_records')
@@ -16,16 +24,11 @@ export const getRecords = async (): Promise<VinylRecord[]> => {
     throw error
   }
 
-  return data.map((record) => ({
-    ...record,
-    albumTitle: record.albumTitle,
-    artist: record.artist,
-    condition: (record.condition as VinylRecord['condition']) || undefined,
-  }))
+  return data.map(mapRecord)
 }
 
 export const addRecord = async (
-  record: Omit<VinylRecord, 'id'>,
+  record: Omit<VinylRecord, 'id' | 'user_id'>,
 ): Promise<VinylRecord> => {
   const {
     data: { user },
@@ -35,6 +38,7 @@ export const addRecord = async (
   const recordToInsert: VinylRecordInsert = {
     ...record,
     user_id: user.id,
+    master_id: record.master_id ?? null,
   }
 
   const { data, error } = await supabase
@@ -47,12 +51,7 @@ export const addRecord = async (
     console.error('Error adding record:', error)
     throw error
   }
-  return {
-    ...data,
-    albumTitle: data.albumTitle,
-    artist: data.artist,
-    condition: (data.condition as VinylRecord['condition']) || undefined,
-  }
+  return mapRecord(data)
 }
 
 export const updateRecord = async (
@@ -60,6 +59,7 @@ export const updateRecord = async (
 ): Promise<VinylRecord> => {
   const recordToUpdate: VinylRecordUpdate = {
     ...record,
+    master_id: record.master_id ?? null,
   }
 
   const { data, error } = await supabase
@@ -73,12 +73,7 @@ export const updateRecord = async (
     console.error('Error updating record:', error)
     throw error
   }
-  return {
-    ...data,
-    albumTitle: data.albumTitle,
-    artist: data.artist,
-    condition: (data.condition as VinylRecord['condition']) || undefined,
-  }
+  return mapRecord(data)
 }
 
 export const deleteRecord = async (id: string): Promise<void> => {
