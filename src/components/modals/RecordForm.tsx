@@ -5,7 +5,8 @@ import { VinylRecord } from '@/types/vinyl'
 import { Button } from '@/components/ui/button'
 import { parseISO, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+
 import {
   Form,
   FormControl,
@@ -88,6 +89,11 @@ export const RecordForm = ({
     formState: { isSubmitting },
   } = form
 
+  const coverArtPreviewUrl = form.watch('coverArtUrl') ?? ''
+
+  // estado local opcional pra saber se a imagem falhou
+  const [coverError, setCoverError] = React.useState(false)
+
   useEffect(() => {
     form.reset({
       albumTitle: initialData?.albumTitle ?? '',
@@ -142,7 +148,7 @@ export const RecordForm = ({
         {!initialData?.id && (
           <>
             <FormItem>
-              <FormLabel>Busca Rápida (Discogs)</FormLabel>
+              <FormLabel>Busca Rápida</FormLabel>
               <FormControl>
                 <DiscogsSearch onSelect={handleDiscogsSelect} />
               </FormControl>
@@ -232,6 +238,32 @@ export const RecordForm = ({
                   value={field.value ?? ''}
                 />
               </FormControl>
+
+              {/* Preview da capa */}
+              {coverArtPreviewUrl && !coverError ? (
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-start gap-3">
+                  <div className="h-24 w-24 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+                    <img
+                      src={coverArtPreviewUrl}
+                      alt="Prévia da capa"
+                      className="h-full w-full object-cover"
+                      onError={() => setCoverError(true)}
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground leading-snug">
+                    Pré-visualização da capa.
+                    <br />
+                    Salvo junto com o disco.
+                  </div>
+                </div>
+              ) : null}
+
+              {coverError && coverArtPreviewUrl ? (
+                <p className="mt-2 text-xs text-destructive">
+                  Não foi possível carregar essa imagem.
+                </p>
+              ) : null}
+
               <FormMessage />
             </FormItem>
           )}
@@ -318,7 +350,7 @@ export const RecordForm = ({
                   <Input
                     type="number"
                     step="0.01"
-                    placeholder="e.g., 25.50"
+                    placeholder="250,00"
                     {...field}
                     value={field.value ?? ''}
                   />

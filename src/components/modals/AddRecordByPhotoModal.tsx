@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Dialog,
   DialogContent,
@@ -6,8 +7,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { CameraCapture } from '@/components/CameraCapture'
-import { identifyAlbumCover, AIResponse } from '@/services/ai'
-import { searchDiscogsMaster } from '@/services/discogs'
+import {
+  identifyAlbumCover,
+  IdentifyAlbumCoverResponse,
+  IdentifyAlbumCoverError,
+} from '@/services/identifyAlbumCover'
+import {
+  searchDiscogsMaster,
+  SearchDiscogsError,
+} from '@/services/discogs'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
 import { toast } from 'sonner'
 import { Loader2, CheckCircle, XCircle, DiscAlbum } from 'lucide-react'
@@ -36,7 +44,9 @@ export const AddRecordByPhotoModal = ({
   const { addRecord } = useVinylContext()
   const [step, setStep] = useState<ProcessStep>('capture')
   const [errorMessage, setErrorMessage] = useState<string>('')
-  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null)
+  const [aiResponse, setAiResponse] =
+    useState<IdentifyAlbumCoverResponse | null>(null)
+  const navigate = useNavigate()
 
   const resetState = () => {
     setStep('capture')
@@ -69,6 +79,7 @@ export const AddRecordByPhotoModal = ({
     const imageFile = new File([imageBlob], 'cover.jpg', { type: 'image/jpeg' })
 
     try {
+      setErrorMessage('')
       setStep('identifying')
       const identified = await identifyAlbumCover(imageFile)
       setAiResponse(identified)
@@ -78,7 +89,7 @@ export const AddRecordByPhotoModal = ({
         identified.artist!,
         identified.album_title!,
       )
-
+      
       if (!discogsResult) {
         throw new Error('Não encontramos uma correspondência exata no Discogs.')
       }
@@ -100,9 +111,37 @@ export const AddRecordByPhotoModal = ({
       setStep('success')
       toast.success(`${newRecord.albumTitle} adicionado à coleção!`)
       setTimeout(handleClose, 1500)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error in photo add flow:', error)
-      setErrorMessage(error.message || 'Ocorreu um erro desconhecido.')
+
+      if (error instanceof IdentifyAlbumCoverError && error.status === 401) {
+        toast.error(error.message)
+        handleClose()
+        navigate('/login')
+        return
+      }
+
+      if (error instanceof SearchDiscogsError && error.status === 403) {
+        toast.error(error.message)
+        handleClose()
+        navigate('/login')
+        return
+      }
+
+      let message: string
+
+      if (error instanceof IdentifyAlbumCoverError) {
+        message = error.message
+      } else if (error instanceof SearchDiscogsError) {
+        message = error.message
+      } else if (error instanceof Error && error.message) {
+        message = error.message
+      } else {
+        message =
+          'Não consegui identificar automaticamente, preencha manualmente.'
+      }
+
+      setErrorMessage(message)
       setStep('error')
     }
   }
@@ -138,7 +177,7 @@ export const AddRecordByPhotoModal = ({
       case 'success':
       case 'error': {
         const messages = {
-          identifying: 'Reconhecendo capa...',
+          identifying: 'Identificando capa...',
           searching: 'Buscando detalhes...',
           saving: 'Salvando na coleção...',
           success: 'Adicionado à coleção!',
