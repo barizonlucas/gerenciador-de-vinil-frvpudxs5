@@ -107,10 +107,10 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
             </p>
             <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" /> {version.community.have}
+                <Users className="h-3 w-3" /> {version.community?.have ?? 0}
               </span>
               <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3" /> {version.community.want}
+                <Heart className="h-3 w-3" /> {version.community?.want ?? 0}
               </span>
             </div>
           </div>
