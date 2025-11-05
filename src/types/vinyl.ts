@@ -12,4 +12,7 @@ export interface VinylRecord {
   notes?: string // Observações (opcional)
   master_id?: string | null // Discogs master ID
   release_id?: string | null // Discogs release ID
+  release_label?: string | null
+  release_country?: string | null
+  release_catno?: string | null
 }

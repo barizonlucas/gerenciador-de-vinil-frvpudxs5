@@ -18,6 +18,7 @@ import { RecordHistory } from '@/components/RecordHistory'
 import { RecordVersionsList } from '@/components/RecordVersionsList'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
 import { toast } from 'sonner'
+import { DiscogsVersion } from '@/services/discogs'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -53,14 +54,20 @@ export const ViewRecordModal = ({
     onDelete(record)
   }
 
-  const handleSelectVersion = async (releaseId: string) => {
+  const handleSelectVersion = async (version: DiscogsVersion) => {
     try {
-      const updatedRecordData = { ...record, release_id: releaseId }
+      const updatedRecordData = {
+        ...record,
+        release_id: version.id.toString(),
+        release_label: version.label,
+        release_country: version.country,
+        release_catno: version.catno,
+      }
       await updateRecord(updatedRecordData)
       setRecord(updatedRecordData)
-      toast.success('Edição salva com sucesso.')
+      toast.success('Versão atualizada com sucesso.')
     } catch (error) {
-      toast.error('Não deu para salvar agora. Tente novamente.')
+      toast.error('Não foi possível atualizar a versão. Tente novamente.')
       throw error
     }
   }

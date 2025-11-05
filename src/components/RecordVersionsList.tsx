@@ -4,11 +4,13 @@ import { Loader2, Users, Heart } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface RecordVersionsListProps {
   masterId: string
   currentReleaseId?: string | null
-  onVersionSelect: (releaseId: string) => Promise<void>
+  onVersionSelect: (version: DiscogsVersion) => Promise<void>
 }
 
 export const RecordVersionsList = ({
@@ -59,7 +61,7 @@ export const RecordVersionsList = ({
       } catch (err: any) {
         if (isMounted) {
           setError(
-            err.message || 'Não foi possível carregar as versões do disco.',
+            err.message || 'Não foi possível carregar agora. Tente novamente.',
           )
         }
       } finally {
@@ -76,21 +78,26 @@ export const RecordVersionsList = ({
 
   const sortedVersions = useMemo(() => {
     if (versions.length === 0) return []
-    const rank = (v: DiscogsVersion) => ({
-      br: v.country?.toLowerCase() === 'brazil' ? 0 : 1,
-      pop: -(v.community?.have ?? 0),
-    })
     return [...versions].sort((a, b) => {
-      const ra = rank(a)
-      const rb = rank(b)
-      return ra.br - rb.br || ra.pop - rb.pop
+      const aIsBrazil = a.country?.toLowerCase() === 'brazil'
+      const bIsBrazil = b.country?.toLowerCase() === 'brazil'
+      if (aIsBrazil && !bIsBrazil) return -1
+      if (!aIsBrazil && bIsBrazil) return 1
+      const aHave = a.community?.have ?? 0
+      const bHave = b.community?.have ?? 0
+      return bHave - aHave
     })
   }, [versions])
 
-  const handleSelectVersion = async (releaseId: string) => {
-    setIsSaving(releaseId)
+  const currentVersionInList = useMemo(() => {
+    if (!currentReleaseId) return false
+    return versions.some((v) => v.id.toString() === currentReleaseId)
+  }, [versions, currentReleaseId])
+
+  const handleSelectVersion = async (version: DiscogsVersion) => {
+    setIsSaving(version.id.toString())
     try {
-      await onVersionSelect(releaseId)
+      await onVersionSelect(version)
     } finally {
       setIsSaving(null)
     }
@@ -119,6 +126,13 @@ export const RecordVersionsList = ({
 
   return (
     <div className="max-h-[400px] overflow-y-auto pr-2 space-y-2">
+      {currentReleaseId && !currentVersionInList && versions.length > 0 && (
+        <Alert variant="default" className="my-2 text-center text-sm">
+          <AlertDescription>
+            Sua versão atual não apareceu nesta lista do Discogs.
+          </AlertDescription>
+        </Alert>
+      )}
       {sortedVersions.map((version, index) => {
         const isCurrent = currentReleaseId === version.id.toString()
         const isSavingThis = isSaving === version.id.toString()
@@ -126,7 +140,10 @@ export const RecordVersionsList = ({
           <div
             key={`${version.id}-${index}`}
             ref={index === sortedVersions.length - 1 ? lastElementRef : null}
-            className="flex items-center gap-4 p-2 rounded-lg hover:bg-accent"
+            className={cn(
+              'flex items-center gap-4 p-2 rounded-lg hover:bg-accent',
+              isCurrent && 'bg-accent border',
+            )}
           >
             <Avatar className="h-16 w-16 rounded-md">
               <AvatarImage src={version.thumb} alt={version.title} />
@@ -151,14 +168,14 @@ export const RecordVersionsList = ({
               {isCurrent && <Badge variant="secondary">Sua versão atual</Badge>}
               <Button
                 size="sm"
-                onClick={() => handleSelectVersion(version.id.toString())}
-                disabled={isSavingThis}
+                onClick={() => handleSelectVersion(version)}
+                disabled={isSavingThis || isCurrent}
                 variant={isCurrent ? 'outline' : 'default'}
               >
                 {isSavingThis && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {isCurrent ? 'Trocar' : 'Esta é a minha versão'}
+                {isCurrent ? 'Trocar versão' : 'Esta é a minha versão'}
               </Button>
             </div>
           </div>

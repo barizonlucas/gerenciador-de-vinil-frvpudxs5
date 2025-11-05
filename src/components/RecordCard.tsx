@@ -28,6 +28,14 @@ export const RecordCard = ({
   onEdit,
   onDelete,
 }: RecordCardProps) => {
+  const releaseInfo = [
+    record.release_label,
+    record.release_catno ? `(${record.release_catno})` : null,
+    record.release_country,
+  ]
+    .filter(Boolean)
+    .join(' • ')
+
   return (
     <Card className="w-full overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="p-0">
@@ -46,6 +54,11 @@ export const RecordCard = ({
       <CardContent className="p-4">
         <CardTitle className="truncate text-lg">{record.albumTitle}</CardTitle>
         <p className="text-sm text-muted-foreground">{record.artist}</p>
+        {releaseInfo && (
+          <p className="text-xs text-muted-foreground truncate mt-1">
+            {releaseInfo}
+          </p>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between p-4 pt-0">
         <p className="text-xs text-muted-foreground">{record.releaseYear}</p>

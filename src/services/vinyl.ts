@@ -12,6 +12,9 @@ const mapRecord = (record: any): VinylRecord => ({
   condition: (record.condition as VinylRecord['condition']) || undefined,
   master_id: record.master_id,
   release_id: record.release_id,
+  release_label: record.release_label,
+  release_country: record.release_country,
+  release_catno: record.release_catno,
 })
 
 export const getRecords = async (): Promise<VinylRecord[]> => {
@@ -36,12 +39,10 @@ export const addRecord = async (
   } = await supabase.auth.getUser()
   if (!user) throw new Error('User not authenticated')
 
-  const recordToInsert: VinylRecordInsert = {
+  const recordToInsert = {
     ...record,
     user_id: user.id,
-    master_id: record.master_id ?? null,
-    release_id: record.release_id ?? null,
-  }
+  } as VinylRecordInsert
 
   const { data, error } = await supabase
     .from('vinyl_records')
@@ -59,11 +60,9 @@ export const addRecord = async (
 export const updateRecord = async (
   record: VinylRecord,
 ): Promise<VinylRecord> => {
-  const recordToUpdate: VinylRecordUpdate = {
+  const recordToUpdate = {
     ...record,
-    master_id: record.master_id ?? null,
-    release_id: record.release_id ?? null,
-  }
+  } as VinylRecordUpdate
 
   const { data, error } = await supabase
     .from('vinyl_records')
