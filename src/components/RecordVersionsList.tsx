@@ -1,8 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { getDiscogsVersions, DiscogsVersion } from '@/services/discogs'
-import { Loader2, Users, Heart } from 'lucide-react'
+import { Loader2, Users, Heart, Flame } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface RecordVersionsListProps {
   masterId: string
@@ -30,7 +35,6 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
   )
 
   useEffect(() => {
-    // Reset state when masterId changes
     setVersions([])
     setPage(1)
     setTotalPages(1)
@@ -67,6 +71,27 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
     }
   }, [masterId, page])
 
+  const sortedAndHighlightedVersions = useMemo(() => {
+    if (versions.length === 0) return []
+
+    const sorted = [...versions].sort((a, b) => {
+      const aIsBrazil = a.country === 'Brazil'
+      const bIsBrazil = b.country === 'Brazil'
+
+      if (aIsBrazil && !bIsBrazil) return -1
+      if (!aIsBrazil && bIsBrazil) return 1
+
+      return (b.community?.have ?? 0) - (a.community?.have ?? 0)
+    })
+
+    const topThreeIds = new Set(sorted.slice(0, 3).map((v) => v.id))
+
+    return sorted.map((version) => ({
+      ...version,
+      isHighlighted: topThreeIds.has(version.id),
+    }))
+  }, [versions])
+
   if (loading && versions.length === 0) {
     return (
       <div className="flex items-center justify-center py-10">
@@ -90,10 +115,14 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
 
   return (
     <div className="max-h-[400px] overflow-y-auto pr-2 space-y-4">
-      {versions.map((version, index) => (
+      {sortedAndHighlightedVersions.map((version, index) => (
         <div
-          key={version.id}
-          ref={index === versions.length - 1 ? lastElementRef : null}
+          key={`${version.id}-${index}`}
+          ref={
+            index === sortedAndHighlightedVersions.length - 1
+              ? lastElementRef
+              : null
+          }
           className="flex items-start gap-4 p-2 rounded-lg hover:bg-accent"
         >
           <Avatar className="h-16 w-16 rounded-md">
@@ -101,7 +130,19 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
             <AvatarFallback className="rounded-md">?</AvatarFallback>
           </Avatar>
           <div className="flex-1 text-sm">
-            <p className="font-semibold">{version.title}</p>
+            <p className="font-semibold flex items-center gap-1.5">
+              {version.title}
+              {version.isHighlighted && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Flame className="h-4 w-4 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edição Popular</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </p>
             <p className="text-muted-foreground">
               {version.label} • {version.country} • {version.year}
             </p>
