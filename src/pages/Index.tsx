@@ -22,6 +22,7 @@ const Index = () => {
     edit: VinylRecord | null
     delete: VinylRecord | null
   }>({ view: null, edit: null, delete: null })
+  const [defaultViewTab, setDefaultViewTab] = useState('details')
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -39,12 +40,18 @@ const Index = () => {
     )
   }, [records, searchTerm])
 
-  const handleView = (record: VinylRecord) =>
+  const handleView = (record: VinylRecord) => {
+    setDefaultViewTab('details')
     setModalState((prev) => ({ ...prev, view: record }))
+  }
   const handleEdit = (record: VinylRecord) =>
     setModalState((prev) => ({ ...prev, edit: record }))
   const handleDelete = (record: VinylRecord) =>
     setModalState((prev) => ({ ...prev, delete: record }))
+  const handleSelectVersion = (record: VinylRecord) => {
+    setDefaultViewTab('versions')
+    setModalState((prev) => ({ ...prev, view: record }))
+  }
 
   const handleUpdateRecord = (updated: VinylRecord) => {
     updateRecord(updated)
@@ -115,6 +122,7 @@ const Index = () => {
                 onView={handleView}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onSelectVersion={handleSelectVersion}
               />
             </div>
           ))}
@@ -139,6 +147,7 @@ const Index = () => {
         record={modalState.view}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        defaultTab={defaultViewTab}
       />
       <EditRecordModal
         isOpen={!!modalState.edit}
