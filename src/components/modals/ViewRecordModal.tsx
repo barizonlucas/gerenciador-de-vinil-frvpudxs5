@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import { DiscAlbum } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RecordHistory } from '@/components/RecordHistory'
 import { RecordVersionsList } from '@/components/RecordVersionsList'
+import { useVinylContext } from '@/contexts/VinylCollectionContext'
+import { toast } from 'sonner'
 
 interface ViewRecordModalProps {
   isOpen: boolean
@@ -27,10 +30,17 @@ interface ViewRecordModalProps {
 export const ViewRecordModal = ({
   isOpen,
   onClose,
-  record,
+  record: initialRecord,
   onEdit,
   onDelete,
 }: ViewRecordModalProps) => {
+  const { updateRecord } = useVinylContext()
+  const [record, setRecord] = useState(initialRecord)
+
+  useEffect(() => {
+    setRecord(initialRecord)
+  }, [initialRecord])
+
   if (!record) return null
 
   const handleEdit = () => {
@@ -41,6 +51,18 @@ export const ViewRecordModal = ({
   const handleDelete = () => {
     onClose()
     onDelete(record)
+  }
+
+  const handleSelectVersion = async (releaseId: string) => {
+    try {
+      const updatedRecordData = { ...record, release_id: releaseId }
+      await updateRecord(updatedRecordData)
+      setRecord(updatedRecordData)
+      toast.success('Edição salva com sucesso.')
+    } catch (error) {
+      toast.error('Não deu para salvar agora. Tente novamente.')
+      throw error
+    }
   }
 
   return (
@@ -125,7 +147,11 @@ export const ViewRecordModal = ({
           </TabsContent>
           {record.master_id && (
             <TabsContent value="versions">
-              <RecordVersionsList masterId={record.master_id} />
+              <RecordVersionsList
+                masterId={record.master_id}
+                currentReleaseId={record.release_id}
+                onVersionSelect={handleSelectVersion}
+              />
             </TabsContent>
           )}
         </Tabs>

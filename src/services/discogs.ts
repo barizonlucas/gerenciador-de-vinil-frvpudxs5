@@ -12,6 +12,7 @@ export interface DiscogsVersion {
   country: string
   label: string
   thumb: string
+  catno: string
   community: {
     have: number
     want: number

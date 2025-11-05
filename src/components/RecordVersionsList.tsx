@@ -1,25 +1,29 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { getDiscogsVersions, DiscogsVersion } from '@/services/discogs'
-import { Loader2, Users, Heart, Flame } from 'lucide-react'
-import { toast } from 'sonner'
+import { Loader2, Users, Heart } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface RecordVersionsListProps {
   masterId: string
+  currentReleaseId?: string | null
+  onVersionSelect: (releaseId: string) => Promise<void>
 }
 
-export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
+export const RecordVersionsList = ({
+  masterId,
+  currentReleaseId,
+  onVersionSelect,
+}: RecordVersionsListProps) => {
   const [versions, setVersions] = useState<DiscogsVersion[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState<string | null>(null)
   const observer = useRef<IntersectionObserver>()
+
   const lastElementRef = useCallback(
     (node: HTMLDivElement) => {
       if (loading) return
@@ -57,7 +61,6 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
           setError(
             err.message || 'Não foi possível carregar as versões do disco.',
           )
-          toast.error('Falha ao buscar versões.')
         }
       } finally {
         if (isMounted) {
@@ -71,32 +74,33 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
     }
   }, [masterId, page])
 
-  const sortedAndHighlightedVersions = useMemo(() => {
+  const sortedVersions = useMemo(() => {
     if (versions.length === 0) return []
-
-    const sorted = [...versions].sort((a, b) => {
-      const aIsBrazil = a.country === 'Brazil'
-      const bIsBrazil = b.country === 'Brazil'
-
-      if (aIsBrazil && !bIsBrazil) return -1
-      if (!aIsBrazil && bIsBrazil) return 1
-
-      return (b.community?.have ?? 0) - (a.community?.have ?? 0)
+    const rank = (v: DiscogsVersion) => ({
+      br: v.country?.toLowerCase() === 'brazil' ? 0 : 1,
+      pop: -(v.community?.have ?? 0),
     })
-
-    const topThreeIds = new Set(sorted.slice(0, 3).map((v) => v.id))
-
-    return sorted.map((version) => ({
-      ...version,
-      isHighlighted: topThreeIds.has(version.id),
-    }))
+    return [...versions].sort((a, b) => {
+      const ra = rank(a)
+      const rb = rank(b)
+      return ra.br - rb.br || ra.pop - rb.pop
+    })
   }, [versions])
+
+  const handleSelectVersion = async (releaseId: string) => {
+    setIsSaving(releaseId)
+    try {
+      await onVersionSelect(releaseId)
+    } finally {
+      setIsSaving(null)
+    }
+  }
 
   if (loading && versions.length === 0) {
     return (
       <div className="flex items-center justify-center py-10">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        <span>Buscando versões no Discogs…</span>
+        <span>Buscando edições no Discogs…</span>
       </div>
     )
   }
@@ -108,55 +112,58 @@ export const RecordVersionsList = ({ masterId }: RecordVersionsListProps) => {
   if (versions.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
-        Não encontramos edições cadastradas para esse álbum.
+        Não encontramos edições cadastradas para este álbum.
       </div>
     )
   }
 
   return (
-    <div className="max-h-[400px] overflow-y-auto pr-2 space-y-4">
-      {sortedAndHighlightedVersions.map((version, index) => (
-        <div
-          key={`${version.id}-${index}`}
-          ref={
-            index === sortedAndHighlightedVersions.length - 1
-              ? lastElementRef
-              : null
-          }
-          className="flex items-start gap-4 p-2 rounded-lg hover:bg-accent"
-        >
-          <Avatar className="h-16 w-16 rounded-md">
-            <AvatarImage src={version.thumb} alt={version.title} />
-            <AvatarFallback className="rounded-md">?</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 text-sm">
-            <p className="font-semibold flex items-center gap-1.5">
-              {version.title}
-              {version.isHighlighted && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Flame className="h-4 w-4 text-orange-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edição Popular</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </p>
-            <p className="text-muted-foreground">
-              {version.label} • {version.country} • {version.year}
-            </p>
-            <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" /> {version.community?.have ?? 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3" /> {version.community?.want ?? 0}
-              </span>
+    <div className="max-h-[400px] overflow-y-auto pr-2 space-y-2">
+      {sortedVersions.map((version, index) => {
+        const isCurrent = currentReleaseId === version.id.toString()
+        const isSavingThis = isSaving === version.id.toString()
+        return (
+          <div
+            key={`${version.id}-${index}`}
+            ref={index === sortedVersions.length - 1 ? lastElementRef : null}
+            className="flex items-center gap-4 p-2 rounded-lg hover:bg-accent"
+          >
+            <Avatar className="h-16 w-16 rounded-md">
+              <AvatarImage src={version.thumb} alt={version.title} />
+              <AvatarFallback className="rounded-md">?</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-sm space-y-1">
+              <p className="font-semibold">{version.title}</p>
+              <p className="text-muted-foreground">
+                {version.label} ({version.catno}) • {version.country} •{' '}
+                {version.year}
+              </p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Users className="h-3 w-3" /> {version.community?.have ?? 0}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Heart className="h-3 w-3" /> {version.community?.want ?? 0}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {isCurrent && <Badge variant="secondary">Sua versão atual</Badge>}
+              <Button
+                size="sm"
+                onClick={() => handleSelectVersion(version.id.toString())}
+                disabled={isSavingThis}
+                variant={isCurrent ? 'outline' : 'default'}
+              >
+                {isSavingThis && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isCurrent ? 'Trocar' : 'Esta é a minha versão'}
+              </Button>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
       {loading && versions.length > 0 && (
         <div className="flex justify-center py-4">
           <Loader2 className="h-6 w-6 animate-spin" />

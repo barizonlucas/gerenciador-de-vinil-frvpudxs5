@@ -11,6 +11,7 @@ const mapRecord = (record: any): VinylRecord => ({
   artist: record.artist,
   condition: (record.condition as VinylRecord['condition']) || undefined,
   master_id: record.master_id,
+  release_id: record.release_id,
 })
 
 export const getRecords = async (): Promise<VinylRecord[]> => {
@@ -39,6 +40,7 @@ export const addRecord = async (
     ...record,
     user_id: user.id,
     master_id: record.master_id ?? null,
+    release_id: record.release_id ?? null,
   }
 
   const { data, error } = await supabase
@@ -60,6 +62,7 @@ export const updateRecord = async (
   const recordToUpdate: VinylRecordUpdate = {
     ...record,
     master_id: record.master_id ?? null,
+    release_id: record.release_id ?? null,
   }
 
   const { data, error } = await supabase

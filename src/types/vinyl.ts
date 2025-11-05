@@ -11,4 +11,5 @@ export interface VinylRecord {
   price?: number // Preço de Compra (opcional)
   notes?: string // Observações (opcional)
   master_id?: string | null // Discogs master ID
+  release_id?: string | null // Discogs release ID
 }
