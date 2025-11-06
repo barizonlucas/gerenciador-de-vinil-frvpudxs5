@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       const label =
         Array.isArray(version.label) && version.label.length > 0
           ? version.label.join(', ')
-          : version.label ?? ''
+          : (version.label ?? '')
       const year =
         version.year ?? version.released ?? version.released_formatted ?? ''
       const communityStats = version.community ?? version.stats?.community ?? {}

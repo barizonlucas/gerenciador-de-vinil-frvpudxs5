@@ -39,12 +39,9 @@ export const searchDiscogsMaster = async (
     type: 'master' | 'release',
   ): Promise<DiscogsSearchResult | null> => {
     const { data, error } =
-      await supabase.functions.invoke<DiscogsSearchResponse>(
-        'search-discogs',
-        {
-          body: { artist, album_title, type },
-        },
-      )
+      await supabase.functions.invoke<DiscogsSearchResponse>('search-discogs', {
+        body: { artist, album_title, type },
+      })
 
     if (error) {
       console.error('Error invoking search-discogs function:', error)

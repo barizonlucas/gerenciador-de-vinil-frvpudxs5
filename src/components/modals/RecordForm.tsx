@@ -41,7 +41,6 @@ const currentYear = new Date().getFullYear()
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
-  master_id: z.string().optional(),
   releaseYear: z.coerce
     .number({ invalid_type_error: 'Ano deve ser um número.' })
     .int()
@@ -57,6 +56,7 @@ const formSchema = z.object({
     .min(0, 'Preço não pode ser negativo.')
     .optional(),
   notes: z.string().optional(),
+  master_id: z.string().optional(),
 })
 
 type RecordFormValues = z.infer<typeof formSchema>
@@ -77,16 +77,13 @@ export const RecordForm = ({
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      albumTitle: '',
+      artist: '',
       ...initialData,
-      albumTitle: initialData?.albumTitle ?? '',
-      artist: initialData?.artist ?? '',
-      master_id:
-        typeof initialData?.master_id === 'string'
-          ? initialData.master_id
-          : undefined,
       purchaseDate: initialData?.purchaseDate
         ? parseISO(initialData.purchaseDate as string)
         : undefined,
+      master_id: initialData?.master_id ?? undefined,
     },
   })
 
@@ -95,18 +92,12 @@ export const RecordForm = ({
   } = form
 
   const coverArtPreviewUrl = form.watch('coverArtUrl') ?? ''
-
-  // estado local opcional pra saber se a imagem falhou
   const [coverError, setCoverError] = React.useState(false)
 
   useEffect(() => {
     form.reset({
       albumTitle: initialData?.albumTitle ?? '',
       artist: initialData?.artist ?? '',
-      master_id:
-        typeof initialData?.master_id === 'string'
-          ? initialData.master_id
-          : undefined,
       releaseYear: initialData?.releaseYear ?? undefined,
       genre: initialData?.genre ?? '',
       coverArtUrl: initialData?.coverArtUrl ?? '',
@@ -116,18 +107,13 @@ export const RecordForm = ({
         : undefined,
       price: initialData?.price ?? undefined,
       notes: initialData?.notes ?? '',
+      master_id: initialData?.master_id ?? '',
     })
   }, [initialData, form])
 
   const handleDiscogsSelect = (result: DiscogsSearchResult) => {
     form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
     form.setValue('artist', result.artist, { shouldValidate: true })
-    const masterId = result.masterId ?? result.id
-    form.setValue(
-      'master_id',
-      masterId !== undefined ? masterId.toString() : undefined,
-      { shouldDirty: true },
-    )
     if (result.year) {
       form.setValue('releaseYear', parseInt(result.year, 10), {
         shouldValidate: true,
@@ -142,6 +128,7 @@ export const RecordForm = ({
     if (result.coverArtUrl) {
       form.setValue('coverArtUrl', result.coverArtUrl)
     }
+    form.setValue('master_id', result.id.toString())
   }
 
   const handleFormSubmit = async (data: RecordFormValues) => {
@@ -253,8 +240,6 @@ export const RecordForm = ({
                   value={field.value ?? ''}
                 />
               </FormControl>
-
-              {/* Preview da capa */}
               {coverArtPreviewUrl && !coverError ? (
                 <div className="mt-3 flex flex-col sm:flex-row sm:items-start gap-3">
                   <div className="h-24 w-24 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
@@ -272,13 +257,11 @@ export const RecordForm = ({
                   </div>
                 </div>
               ) : null}
-
               {coverError && coverArtPreviewUrl ? (
                 <p className="mt-2 text-xs text-destructive">
                   Não foi possível carregar essa imagem.
                 </p>
               ) : null}
-
               <FormMessage />
             </FormItem>
           )}

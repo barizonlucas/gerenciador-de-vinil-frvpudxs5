@@ -118,7 +118,9 @@ export const AddRecordByPhotoModal = ({
           ? discogsResult.genre.join(', ')
           : discogsResult.genre,
         master_id: masterId,
-        release_id: preferredVersion ? preferredVersion.id.toString() : undefined,
+        release_id: preferredVersion
+          ? preferredVersion.id.toString()
+          : undefined,
         release_label: preferredVersion?.label,
         release_country: preferredVersion?.country,
         release_catno: preferredVersion?.catno,

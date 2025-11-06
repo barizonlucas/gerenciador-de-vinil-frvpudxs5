@@ -74,7 +74,7 @@ export const Header = () => {
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
           <Button onClick={openAddModal}>
-            <Plus className="mr-2 h-4 w-4" /> Adicionar Disco
+            <Plus className="mr-2 h-4 w-4" /> Adicionar Novo Disco
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -1,9 +1,16 @@
 import { createContext, useContext, ReactNode, useState } from 'react'
 import { useVinylCollection } from '@/hooks/use-vinyl-collection'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { RecordForm } from '@/components/modals/RecordForm'
 import { AddRecordByPhotoModal } from '@/components/modals/AddRecordByPhotoModal'
 import { toast } from 'sonner'
+import { VinylRecord } from '@/types/vinyl'
 
 type UseVinylCollectionType = ReturnType<typeof useVinylCollection>
 
@@ -14,6 +21,8 @@ interface VinylCollectionContextType extends UseVinylCollectionType {
   isAddByPhotoModalOpen: boolean
   openAddByPhotoModal: () => void
   closeAddByPhotoModal: () => void
+  recordToViewAfterAdd: VinylRecord | null
+  clearRecordToViewAfterAdd: () => void
 }
 
 const VinylCollectionContext = createContext<
@@ -28,11 +37,28 @@ export const VinylCollectionProvider = ({
   const collection = useVinylCollection()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isAddByPhotoModalOpen, setIsAddByPhotoModalOpen] = useState(false)
+  const [recordToViewAfterAdd, setRecordToViewAfterAdd] =
+    useState<VinylRecord | null>(null)
 
   const openAddModal = () => setIsAddModalOpen(true)
   const closeAddModal = () => setIsAddModalOpen(false)
   const openAddByPhotoModal = () => setIsAddByPhotoModalOpen(true)
   const closeAddByPhotoModal = () => setIsAddByPhotoModalOpen(false)
+  const clearRecordToViewAfterAdd = () => setRecordToViewAfterAdd(null)
+
+  const handleAddRecord = async (data: Omit<VinylRecord, 'id' | 'user_id'>) => {
+    try {
+      const newRecord = await collection.addRecord(data)
+      toast.success('Disco adicionado com sucesso!')
+      closeAddModal()
+      if (newRecord.master_id) {
+        setRecordToViewAfterAdd(newRecord)
+      }
+    } catch (error) {
+      toast.error('Não foi possível adicionar o disco. Tente novamente.')
+      throw error
+    }
+  }
 
   const value: VinylCollectionContextType = {
     ...collection,
@@ -42,6 +68,8 @@ export const VinylCollectionProvider = ({
     isAddByPhotoModalOpen,
     openAddByPhotoModal,
     closeAddByPhotoModal,
+    recordToViewAfterAdd,
+    clearRecordToViewAfterAdd,
   }
 
   return (
@@ -49,16 +77,15 @@ export const VinylCollectionProvider = ({
       {children}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Vinil</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes do disco. Use a busca rápida para preencher
+              automaticamente.
+            </DialogDescription>
+          </DialogHeader>
           <RecordForm
-            onSubmit={async (data) => {
-              try {
-                await collection.addRecord(data)
-                toast.success('Disco adicionado com sucesso!')
-                closeAddModal()
-              } catch (error) {
-                toast.error('Falha ao adicionar o disco.')
-              }
-            }}
+            onSubmit={handleAddRecord}
             onCancel={closeAddModal}
             submitButtonText="Adicionar Disco"
           />

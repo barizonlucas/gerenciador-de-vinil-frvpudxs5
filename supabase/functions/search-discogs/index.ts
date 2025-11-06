@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       const [itemArtist, ...titleParts] = item.title.split(' - ')
       const itemAlbumTitle = titleParts.join(' - ')
       const resolvedMasterId =
-        type === 'master' ? item.id : item.master_id ?? item.id
+        type === 'master' ? item.id : (item.master_id ?? item.id)
       return {
         id: item.id,
         masterId: resolvedMasterId,

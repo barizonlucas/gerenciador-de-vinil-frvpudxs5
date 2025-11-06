@@ -15,20 +15,37 @@ import { toast } from 'sonner'
 const Index = () => {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { records, loading, updateRecord, deleteRecord } = useVinylContext()
+  const {
+    records,
+    loading,
+    updateRecord,
+    deleteRecord,
+    recordToViewAfterAdd,
+    clearRecordToViewAfterAdd,
+  } = useVinylContext()
   const [searchTerm, setSearchTerm] = useState('')
   const [modalState, setModalState] = useState<{
     view: VinylRecord | null
     edit: VinylRecord | null
     delete: VinylRecord | null
   }>({ view: null, edit: null, delete: null })
-  const [defaultViewTab, setDefaultViewTab] = useState('details')
+  const [defaultViewTab, setDefaultViewTab] = useState<string | undefined>(
+    undefined,
+  )
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login')
     }
   }, [user, authLoading, navigate])
+
+  useEffect(() => {
+    if (recordToViewAfterAdd) {
+      handleView(recordToViewAfterAdd)
+      setDefaultViewTab('versions')
+      clearRecordToViewAfterAdd()
+    }
+  }, [recordToViewAfterAdd, clearRecordToViewAfterAdd])
 
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return records
@@ -40,18 +57,12 @@ const Index = () => {
     )
   }, [records, searchTerm])
 
-  const handleView = (record: VinylRecord) => {
-    setDefaultViewTab('details')
+  const handleView = (record: VinylRecord) =>
     setModalState((prev) => ({ ...prev, view: record }))
-  }
   const handleEdit = (record: VinylRecord) =>
     setModalState((prev) => ({ ...prev, edit: record }))
   const handleDelete = (record: VinylRecord) =>
     setModalState((prev) => ({ ...prev, delete: record }))
-  const handleSelectVersion = (record: VinylRecord) => {
-    setDefaultViewTab('versions')
-    setModalState((prev) => ({ ...prev, view: record }))
-  }
 
   const handleUpdateRecord = (updated: VinylRecord) => {
     updateRecord(updated)
@@ -70,8 +81,10 @@ const Index = () => {
     }
   }
 
-  const closeModal = () =>
+  const closeModal = () => {
     setModalState({ view: null, edit: null, delete: null })
+    setDefaultViewTab(undefined)
+  }
 
   const totalDiscos = records.length
   const discosLabel = totalDiscos === 1 ? 'disco' : 'discos'
@@ -122,7 +135,6 @@ const Index = () => {
                 onView={handleView}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onSelectVersion={handleSelectVersion}
               />
             </div>
           ))}
