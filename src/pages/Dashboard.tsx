@@ -1,10 +1,4 @@
-import {
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-  type ComponentType,
-} from 'react'
+import { useMemo, useState, useEffect, useRef, type ComponentType } from 'react'
 import {
   Disc,
   Users,
@@ -217,9 +211,7 @@ const DashboardPage = () => {
         ? {
             label: topArtistEntry.label,
             count: topArtistEntry.count,
-            percentage: Math.round(
-              (topArtistEntry.count / totalRecords) * 100,
-            ),
+            percentage: Math.round((topArtistEntry.count / totalRecords) * 100),
           }
         : null
 
@@ -237,8 +229,7 @@ const DashboardPage = () => {
       {
         key: 'artists',
         label: 'Artistas únicos',
-        value:
-          totalRecords > 0 ? numberFormatter.format(uniqueArtists) : '—',
+        value: totalRecords > 0 ? numberFormatter.format(uniqueArtists) : '—',
         description:
           uniqueArtists > 0
             ? `${formatCountWithLabel(
@@ -252,8 +243,7 @@ const DashboardPage = () => {
       {
         key: 'genres',
         label: 'Gêneros presentes',
-        value:
-          totalRecords > 0 ? numberFormatter.format(uniqueGenres) : '—',
+        value: totalRecords > 0 ? numberFormatter.format(uniqueGenres) : '—',
         description:
           uniqueGenres > 1
             ? `${formatCountWithLabel(
@@ -459,140 +449,140 @@ const DashboardPage = () => {
         )}
       </div>
 
-      {loading
-        ? renderSkeleton()
-        : stats.totalRecords === 0
-          ? renderEmptyState()
-          : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {stats.cards.map((card) => {
-                    const Icon = card.icon
-                    return (
-                      <Card key={card.key} className="transition-all hover:shadow-md">
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-                          <div className="space-y-1">
-                            <CardDescription className="uppercase tracking-wide text-xs">
-                              {card.label}
-                            </CardDescription>
-                            <CardTitle className="text-3xl font-bold">
-                              {card.value}
-                            </CardTitle>
-                          </div>
-                          <div className="rounded-full bg-primary/10 p-3 text-primary">
-                            <Icon className="h-5 w-5" />
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            {card.description}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
-
-                <section className="mt-12 space-y-4">
-                  <div className="flex flex-col gap-2">
-                    <h2 className="text-2xl font-semibold">Essência musical</h2>
+      {loading ? (
+        renderSkeleton()
+      ) : stats.totalRecords === 0 ? (
+        renderEmptyState()
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {stats.cards.map((card) => {
+              const Icon = card.icon
+              return (
+                <Card key={card.key} className="transition-all hover:shadow-md">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+                    <div className="space-y-1">
+                      <CardDescription className="uppercase tracking-wide text-xs">
+                        {card.label}
+                      </CardDescription>
+                      <CardTitle className="text-3xl font-bold">
+                        {card.value}
+                      </CardTitle>
+                    </div>
+                    <div className="rounded-full bg-primary/10 p-3 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      Descubra o som da sua coleção — os padrões que definem seu
-                      gosto e contam sua história musical.
+                      {card.description}
                     </p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          <section className="mt-12 space-y-4">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-2xl font-semibold">Essência musical</h2>
+              <p className="text-sm text-muted-foreground">
+                Descubra o som da sua coleção — os padrões que definem seu gosto
+                e contam sua história musical.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <Card className="transition-all hover:shadow-md">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardDescription className="uppercase tracking-wide text-xs">
+                      Gênero predominante
+                    </CardDescription>
+                    <CardTitle className="text-2xl font-semibold">
+                      {stats.topGenre?.label ?? '—'}
+                    </CardTitle>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <Card className="transition-all hover:shadow-md">
-                      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-                        <div className="space-y-1">
-                          <CardDescription className="uppercase tracking-wide text-xs">
-                            Gênero predominante
-                          </CardDescription>
-                          <CardTitle className="text-2xl font-semibold">
-                            {stats.topGenre?.label ?? '—'}
-                          </CardTitle>
-                        </div>
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Music className="h-5 w-5" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          {stats.topGenre
-                            ? `Seu gênero predominante é ${stats.topGenre.label}${
-                                typeof stats.topGenre.percentage === 'number'
-                                  ? ` (${formatPercentage(stats.topGenre.percentage)})`
-                                  : ''
-                              }.`
-                            : 'Complete os gêneros dos seus discos para descobrir sua essência musical.'}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="transition-all hover:shadow-md">
-                      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-                        <div className="space-y-1">
-                          <CardDescription className="uppercase tracking-wide text-xs">
-                            Artista mais representado
-                          </CardDescription>
-                          <CardTitle className="text-2xl font-semibold">
-                            {stats.topArtist?.label ?? '—'}
-                          </CardTitle>
-                        </div>
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Users className="h-5 w-5" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          {stats.topArtist
-                            ? `Seu artista mais presente é ${stats.topArtist.label} (${formatCountWithLabel(
-                                stats.topArtist.count,
-                                'disco',
-                                'discos',
-                              )}).`
-                            : 'Informe o artista dos discos para revelar quem domina a vitrola.'}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="transition-all hover:shadow-md">
-                      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-                        <div className="space-y-1">
-                          <CardDescription className="uppercase tracking-wide text-xs">
-                            Mensagem interpretativa
-                          </CardDescription>
-                          <CardTitle className="text-2xl font-semibold">
-                            Sua essência musical
-                          </CardTitle>
-                        </div>
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                          <Sparkles className="h-5 w-5" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {essenceData && essenceLoading ? (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {essenceData
-                              ? essenceError
-                                ? essenceError
-                                : essenceMessage ??
-                                  'Ainda não foi possível gerar uma leitura personalizada.'
-                              : 'Complete gênero e artista dos seus discos para gerar uma leitura personalizada.'}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
+                  <div className="rounded-full bg-primary/10 p-3 text-primary">
+                    <Music className="h-5 w-5" />
                   </div>
-                </section>
-              </>
-            )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.topGenre
+                      ? `Seu gênero predominante é ${stats.topGenre.label}${
+                          typeof stats.topGenre.percentage === 'number'
+                            ? ` (${formatPercentage(stats.topGenre.percentage)})`
+                            : ''
+                        }.`
+                      : 'Complete os gêneros dos seus discos para descobrir sua essência musical.'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="transition-all hover:shadow-md">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardDescription className="uppercase tracking-wide text-xs">
+                      Artista mais representado
+                    </CardDescription>
+                    <CardTitle className="text-2xl font-semibold">
+                      {stats.topArtist?.label ?? '—'}
+                    </CardTitle>
+                  </div>
+                  <div className="rounded-full bg-primary/10 p-3 text-primary">
+                    <Users className="h-5 w-5" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.topArtist
+                      ? `Seu artista mais presente é ${stats.topArtist.label} (${formatCountWithLabel(
+                          stats.topArtist.count,
+                          'disco',
+                          'discos',
+                        )}).`
+                      : 'Informe o artista dos discos para revelar quem domina a vitrola.'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="transition-all hover:shadow-md">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardDescription className="uppercase tracking-wide text-xs">
+                      Mensagem interpretativa
+                    </CardDescription>
+                    <CardTitle className="text-2xl font-semibold">
+                      Sua essência musical
+                    </CardTitle>
+                  </div>
+                  <div className="rounded-full bg-primary/10 p-3 text-primary">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {essenceData && essenceLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {essenceData
+                        ? essenceError
+                          ? essenceError
+                          : (essenceMessage ??
+                            'Ainda não foi possível gerar uma leitura personalizada.')
+                        : 'Complete gênero e artista dos seus discos para gerar uma leitura personalizada.'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }
