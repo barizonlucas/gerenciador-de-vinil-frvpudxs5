@@ -23,6 +23,35 @@ async function fileToGenerativePart(file: File) {
   }
 }
 
+interface EssenceRequestBody {
+  totalRecords: number
+  topGenre?: {
+    label: string
+    count: number
+    percentage: number | null
+  } | null
+  topArtist?: {
+    label: string
+    count: number
+    percentage: number | null
+  } | null
+  topDecade?: {
+    decade: number
+    label: string
+    share: number | null
+  } | null
+  topCountry?: {
+    label: string
+    share: number | null
+  } | null
+}
+
+const cleanModelOutput = (text: string) =>
+  text
+    .replace(/```/g, '')
+    .replace(/^["']|["']$/g, '')
+    .trim()
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -50,14 +79,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    const formData = await req.formData()
-    const imageFile = formData.get('cover') as File | null
-    if (!imageFile) {
-      return new Response(JSON.stringify({ error: 'Image file is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const url = new URL(req.url)
+    const modeQuery = url.searchParams.get('mode')
+    const contentType = req.headers.get('Content-Type') ?? ''
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
@@ -71,6 +95,86 @@ Deno.serve(async (req) => {
     }
     const genAI = new GoogleGenerativeAI(geminiApiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+
+    if (contentType.includes('application/json') || modeQuery === 'essence') {
+      let body: (EssenceRequestBody & { mode?: string }) | null = null
+      try {
+        body = (await req.json()) as EssenceRequestBody & { mode?: string }
+      } catch (parseError) {
+        console.error('Failed to parse essence request body:', parseError)
+        return new Response(
+          JSON.stringify({
+            error:
+              'Não foi possível interpretar o conteúdo enviado. Verifique os dados e tente novamente.',
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        )
+      }
+
+      const requestMode = body?.mode ?? modeQuery
+
+      if (requestMode === 'essence') {
+        if (
+          !body ||
+          typeof body.totalRecords !== 'number' ||
+          body.totalRecords <= 0 ||
+          !body.topGenre ||
+          !body.topArtist
+        ) {
+          return new Response(
+            JSON.stringify({
+              message:
+                'Sua coleção ainda não tem dados suficientes para formar uma essência musical.',
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
+        const { mode, ...essenceSummary } = body
+
+        const prompt = `
+          Você receberá um resumo em JSON com métricas de uma coleção de discos de vinil.
+          Escreva UMA frase curta (máximo 30 palavras) em português brasileiro que capture o espírito musical dessa coleção.
+          O tom deve ser inspirador, acolhedor e cheio de orgulho.
+          Não repita os números literalmente; interprete-os de forma criativa.
+          Dados:
+          ${JSON.stringify(essenceSummary)}
+          Responda apenas com a frase.
+        `.trim()
+
+        const result = await model.generateContent(prompt)
+        const response = await result.response
+        const message = cleanModelOutput(response.text())
+
+        return new Response(JSON.stringify({ message }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: 'Requisição JSON não suportada para este endpoint.',
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    const formData = await req.formData()
+    const imageFile = formData.get('cover') as File | null
+    if (!imageFile) {
+      return new Response(JSON.stringify({ error: 'Image file is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const prompt = `
       You receive a photo of a vinyl record cover.

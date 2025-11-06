@@ -68,6 +68,9 @@ export const Header = () => {
           <NavLink to="/" className={navLinkClass}>
             Início
           </NavLink>
+          <NavLink to="/dash" className={navLinkClass}>
+            Dashboard
+          </NavLink>
           <NavLink to="/profile" className={navLinkClass}>
             Perfil
           </NavLink>
@@ -117,6 +120,9 @@ export const Header = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="md:hidden">
                   <Link to="/">Início</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="md:hidden">
+                  <Link to="/dash">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/profile">
