@@ -1,5 +1,6 @@
 export interface DiscogsSearchResult {
   id: number
+  masterId?: number
   albumTitle: string
   artist: string
   year?: string

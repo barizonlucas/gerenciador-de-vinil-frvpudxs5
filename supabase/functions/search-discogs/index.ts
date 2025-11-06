@@ -5,6 +5,7 @@ const DISCOGS_API_URL = 'https://api.discogs.com/database/search'
 
 interface DiscogsResult {
   id: number
+  master_id?: number
   title: string
   year?: string
   cover_image: string
@@ -67,8 +68,11 @@ Deno.serve(async (req) => {
     const formattedResults = data.results.map((item: DiscogsResult) => {
       const [itemArtist, ...titleParts] = item.title.split(' - ')
       const itemAlbumTitle = titleParts.join(' - ')
+      const resolvedMasterId =
+        type === 'master' ? item.id : item.master_id ?? item.id
       return {
         id: item.id,
+        masterId: resolvedMasterId,
         artist: itemArtist?.trim(),
         albumTitle: itemAlbumTitle?.trim() || itemArtist?.trim(),
         year: item.year,
