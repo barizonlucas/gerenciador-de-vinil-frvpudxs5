@@ -20,6 +20,7 @@ interface RecordCardProps {
   onView: (record: VinylRecord) => void
   onEdit: (record: VinylRecord) => void
   onDelete: (record: VinylRecord) => void
+  onSelectVersion: (record: VinylRecord) => void
 }
 
 export const RecordCard = ({
@@ -27,6 +28,7 @@ export const RecordCard = ({
   onView,
   onEdit,
   onDelete,
+  onSelectVersion,
 }: RecordCardProps) => {
   const releaseInfo = [
     record.release_label,
@@ -54,6 +56,16 @@ export const RecordCard = ({
       <CardContent className="p-4">
         <CardTitle className="truncate text-lg">{record.albumTitle}</CardTitle>
         <p className="text-sm text-muted-foreground">{record.artist}</p>
+        {record.master_id && !record.release_id && (
+          <Button
+            variant="link"
+            size="sm"
+            className="p-0 h-auto mt-1 text-primary"
+            onClick={() => onSelectVersion(record)}
+          >
+            Selecionar Versão
+          </Button>
+        )}
         {releaseInfo && (
           <p className="text-xs text-muted-foreground truncate mt-1">
             {releaseInfo}

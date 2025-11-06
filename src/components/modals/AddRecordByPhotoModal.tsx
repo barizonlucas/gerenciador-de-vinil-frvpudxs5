@@ -7,7 +7,11 @@ import {
 } from '@/components/ui/dialog'
 import { CameraCapture } from '@/components/CameraCapture'
 import { identifyAlbumCover, AIResponse } from '@/services/ai'
-import { searchDiscogsMaster } from '@/services/discogs'
+import {
+  searchDiscogsMaster,
+  getDiscogsVersions,
+  DiscogsVersion,
+} from '@/services/discogs'
 import { useVinylContext } from '@/contexts/VinylCollectionContext'
 import { toast } from 'sonner'
 import { Loader2, CheckCircle, XCircle, DiscAlbum } from 'lucide-react'
@@ -75,8 +79,8 @@ export const AddRecordByPhotoModal = ({
 
       setStep('searching')
       const discogsResult = await searchDiscogsMaster(
-        identified.artist!,
-        identified.album_title!,
+        identified.artist ?? '',
+        identified.album_title ?? '',
       )
 
       if (!discogsResult) {
@@ -84,17 +88,40 @@ export const AddRecordByPhotoModal = ({
       }
 
       setStep('saving')
+      const masterId = (discogsResult.masterId ?? discogsResult.id).toString()
+      let preferredVersion: DiscogsVersion | null = null
+
+      try {
+        const versionsResponse = await getDiscogsVersions(masterId, 1)
+        preferredVersion = versionsResponse.versions?.[0] ?? null
+      } catch (versionError) {
+        console.error(
+          'Falha ao buscar versões do master (cadastro por foto):',
+          versionError,
+        )
+      }
+
+      const releaseYearFromVersion =
+        preferredVersion?.year &&
+        !Number.isNaN(parseInt(preferredVersion.year, 10))
+          ? parseInt(preferredVersion.year, 10)
+          : undefined
+
       const newRecord: Omit<VinylRecord, 'id' | 'user_id'> = {
         albumTitle: discogsResult.albumTitle,
         artist: discogsResult.artist,
         releaseYear: discogsResult.year
           ? parseInt(discogsResult.year, 10)
-          : undefined,
-        coverArtUrl: discogsResult.coverArtUrl,
+          : releaseYearFromVersion,
+        coverArtUrl: discogsResult.coverArtUrl || preferredVersion?.thumb,
         genre: Array.isArray(discogsResult.genre)
           ? discogsResult.genre.join(', ')
           : discogsResult.genre,
-        master_id: discogsResult.id.toString(),
+        master_id: masterId,
+        release_id: preferredVersion ? preferredVersion.id.toString() : undefined,
+        release_label: preferredVersion?.label,
+        release_country: preferredVersion?.country,
+        release_catno: preferredVersion?.catno,
       }
       await addRecord(newRecord)
 

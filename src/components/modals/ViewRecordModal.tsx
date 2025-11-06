@@ -26,6 +26,7 @@ interface ViewRecordModalProps {
   record: VinylRecord | null
   onEdit: (record: VinylRecord) => void
   onDelete: (record: VinylRecord) => void
+  defaultTab?: string
 }
 
 export const ViewRecordModal = ({
@@ -34,13 +35,21 @@ export const ViewRecordModal = ({
   record: initialRecord,
   onEdit,
   onDelete,
+  defaultTab,
 }: ViewRecordModalProps) => {
   const { updateRecord } = useVinylContext()
   const [record, setRecord] = useState(initialRecord)
+  const [activeTab, setActiveTab] = useState('details')
 
   useEffect(() => {
     setRecord(initialRecord)
   }, [initialRecord])
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab || 'details')
+    }
+  }, [isOpen, defaultTab])
 
   if (!record) return null
 
@@ -82,7 +91,7 @@ export const ViewRecordModal = ({
           <DialogDescription>{record.artist}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList
             className={`grid w-full ${
               record.master_id ? 'grid-cols-3' : 'grid-cols-2'

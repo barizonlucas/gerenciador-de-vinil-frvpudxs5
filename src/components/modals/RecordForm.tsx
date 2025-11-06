@@ -41,6 +41,7 @@ const currentYear = new Date().getFullYear()
 const formSchema = z.object({
   albumTitle: z.string().min(1, 'Título do álbum é obrigatório.'),
   artist: z.string().min(1, 'Artista é obrigatório.'),
+  master_id: z.string().optional(),
   releaseYear: z.coerce
     .number({ invalid_type_error: 'Ano deve ser um número.' })
     .int()
@@ -76,9 +77,13 @@ export const RecordForm = ({
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      albumTitle: '',
-      artist: '',
       ...initialData,
+      albumTitle: initialData?.albumTitle ?? '',
+      artist: initialData?.artist ?? '',
+      master_id:
+        typeof initialData?.master_id === 'string'
+          ? initialData.master_id
+          : undefined,
       purchaseDate: initialData?.purchaseDate
         ? parseISO(initialData.purchaseDate as string)
         : undefined,
@@ -98,6 +103,10 @@ export const RecordForm = ({
     form.reset({
       albumTitle: initialData?.albumTitle ?? '',
       artist: initialData?.artist ?? '',
+      master_id:
+        typeof initialData?.master_id === 'string'
+          ? initialData.master_id
+          : undefined,
       releaseYear: initialData?.releaseYear ?? undefined,
       genre: initialData?.genre ?? '',
       coverArtUrl: initialData?.coverArtUrl ?? '',
@@ -113,6 +122,12 @@ export const RecordForm = ({
   const handleDiscogsSelect = (result: DiscogsSearchResult) => {
     form.setValue('albumTitle', result.albumTitle, { shouldValidate: true })
     form.setValue('artist', result.artist, { shouldValidate: true })
+    const masterId = result.masterId ?? result.id
+    form.setValue(
+      'master_id',
+      masterId !== undefined ? masterId.toString() : undefined,
+      { shouldDirty: true },
+    )
     if (result.year) {
       form.setValue('releaseYear', parseInt(result.year, 10), {
         shouldValidate: true,
