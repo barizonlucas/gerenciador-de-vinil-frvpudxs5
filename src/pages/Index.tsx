@@ -9,7 +9,7 @@ import { EditRecordModal } from '@/components/modals/EditRecordModal'
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const Index = () => {
@@ -79,10 +79,18 @@ const Index = () => {
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Coleção: {totalDiscos} {discosLabel}
-          </h1>
+        <div className="w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+            <h1 className="text-3xl font-bold">
+              Coleção: {totalDiscos} {discosLabel}
+            </h1>
+            <Link
+              to="/dash"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Saber mais
+            </Link>
+          </div>
           <p className="text-muted-foreground">
             Explore e gerencie sua coleção de vinis.
           </p>

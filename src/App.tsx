@@ -14,6 +14,7 @@ import RegisterPage from './pages/Auth/Register'
 import ForgotPasswordPage from './pages/Auth/ForgotPassword'
 import UpdatePasswordPage from './pages/Auth/UpdatePassword'
 import ProfilePage from './pages/Profile'
+import DashboardPage from './pages/Dashboard'
 import { ThemeProvider } from './contexts/ThemeContext'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
                 <Route element={<ProtectedRoute />}>
                   <Route element={<Layout />}>
                     <Route path="/" element={<Index />} />
+                    <Route path="/dash" element={<DashboardPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                   </Route>
                 </Route>
