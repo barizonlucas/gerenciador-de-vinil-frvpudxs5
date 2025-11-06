@@ -65,7 +65,55 @@ Deno.serve(async (req) => {
 
     const data = await response.json()
 
-    return new Response(JSON.stringify(data), {
+    const formattedVersions = (data.versions ?? []).map((version: any) => {
+      const label =
+        Array.isArray(version.label) && version.label.length > 0
+          ? version.label.join(', ')
+          : version.label ?? ''
+      const year =
+        version.year ?? version.released ?? version.released_formatted ?? ''
+      const communityStats = version.community ?? version.stats?.community ?? {}
+      return {
+        id: version.id,
+        title: version.title,
+        year,
+        country: version.country ?? '',
+        label,
+        thumb: version.thumb,
+        catno: version.catno ?? '',
+        format: version.format ?? version.formats ?? '',
+        community: {
+          have:
+            communityStats.have ??
+            communityStats.in_collection ??
+            communityStats.owned ??
+            0,
+          want:
+            communityStats.want ??
+            communityStats.in_wantlist ??
+            communityStats.wanted ??
+            0,
+        },
+      }
+    })
+
+    const sorted = formattedVersions.sort((a, b) => {
+      const aIsBrazil = a.country?.toLowerCase() === 'brazil'
+      const bIsBrazil = b.country?.toLowerCase() === 'brazil'
+      if (aIsBrazil && !bIsBrazil) return -1
+      if (!aIsBrazil && bIsBrazil) return 1
+      if (b.community.have !== a.community.have) {
+        return b.community.have - a.community.have
+      }
+      return b.community.want - a.community.want
+    })
+
+    const formatted = {
+      pagination: data.pagination,
+      versions: sorted,
+    }
+
+    return new Response(JSON.stringify(formatted), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
