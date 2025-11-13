@@ -84,7 +84,8 @@ const AdminMessagesPage = () => {
         if (!search) return true
         return (
           message.message.toLowerCase().includes(search) ||
-          message.user_email?.toLowerCase().includes(search)
+          message.user_email?.toLowerCase().includes(search) ||
+          message.user_display_name?.toLowerCase().includes(search)
         )
       })
   }, [messages, statusFilter, debouncedSearchTerm])
