@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import { Poll, PollOption, UserVote } from '@/types/poll'
+import { logEvent } from './telemetry'
 
 export interface ActivePollData extends Poll {
   userVote: UserVote | null
@@ -96,24 +97,58 @@ export const submitVote = async (
 
   if (error) {
     if (error.code === '23505') {
-      // Unique constraint violation, meaning vote already exists. Try to update.
+      logEvent('poll_vote_conflict', {
+        user_id: user.id,
+        poll_id: pollId,
+        option_id: optionId,
+        reason: 'User already voted, attempting update.',
+      })
+
       const { data: existingVote, error: selectError } = await supabase
         .from('feature_poll_votes')
-        .select('id')
+        .select('id, option_id')
         .eq('poll_id', pollId)
         .eq('user_id', user.id)
         .single()
 
       if (selectError || !existingVote) {
+        logEvent('poll_vote_error', {
+          user_id: user.id,
+          poll_id: pollId,
+          error: 'Failed to find existing vote after conflict.',
+        })
         throw (
           selectError || new Error('Failed to find existing vote to update.')
         )
       }
+
+      if (existingVote.option_id === optionId) {
+        return { voteId: existingVote.id } // No change needed
+      }
+
       await updateVote(existingVote.id, optionId)
+      logEvent('poll_vote_changed', {
+        user_id: user.id,
+        poll_id: pollId,
+        previous_option_id: existingVote.option_id,
+        new_option_id: optionId,
+      })
       return { voteId: existingVote.id }
     }
+    logEvent('poll_vote_error', {
+      user_id: user.id,
+      poll_id: pollId,
+      option_id: optionId,
+      error: error.message,
+    })
     throw error
   }
+
+  logEvent('poll_voted', {
+    user_id: user.id,
+    poll_id: pollId,
+    option_id: optionId,
+  })
   return { voteId: data.id }
 }
 
@@ -125,7 +160,17 @@ export const updateVote = async (
     .from('feature_poll_votes')
     .update({ option_id: optionId })
     .eq('id', voteId)
-  if (error) throw error
+  if (error) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    logEvent('poll_vote_error', {
+      user_id: user?.id,
+      vote_id: voteId,
+      error: `Failed to update vote: ${error.message}`,
+    })
+    throw error
+  }
 }
 
 // For Admin Panel
