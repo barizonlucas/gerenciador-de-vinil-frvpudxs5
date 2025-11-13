@@ -116,7 +116,7 @@ export const getActivePoll = async (): Promise<ActivePollData | null> => {
 export const submitVote = async (
   pollId: string,
   optionId: string,
-): Promise<{ voteId: string }> => {
+): Promise<{ voteId: string; isNew: boolean; previousOptionId?: string }> => {
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -130,13 +130,7 @@ export const submitVote = async (
 
   if (error) {
     if (error.code === '23505') {
-      logEvent('poll_vote_conflict', {
-        user_id: user.id,
-        poll_id: pollId,
-        option_id: optionId,
-        reason: 'User already voted, attempting update.',
-      })
-
+      // User already voted, attempt to update
       const { data: existingVote, error: selectError } = await supabase
         .from('feature_poll_votes')
         .select('id, option_id')
@@ -145,44 +139,26 @@ export const submitVote = async (
         .single()
 
       if (selectError || !existingVote) {
-        logEvent('poll_vote_error', {
-          user_id: user.id,
-          poll_id: pollId,
-          error: 'Failed to find existing vote after conflict.',
-        })
         throw (
           selectError || new Error('Failed to find existing vote to update.')
         )
       }
 
       if (existingVote.option_id === optionId) {
-        return { voteId: existingVote.id } // No change needed
+        return { voteId: existingVote.id, isNew: false } // No change needed
       }
 
       await updateVote(existingVote.id, optionId)
-      logEvent('poll_vote_changed', {
-        user_id: user.id,
-        poll_id: pollId,
-        previous_option_id: existingVote.option_id,
-        new_option_id: optionId,
-      })
-      return { voteId: existingVote.id }
+      return {
+        voteId: existingVote.id,
+        isNew: false,
+        previousOptionId: existingVote.option_id,
+      }
     }
-    logEvent('poll_vote_error', {
-      user_id: user.id,
-      poll_id: pollId,
-      option_id: optionId,
-      error: error.message,
-    })
     throw error
   }
 
-  logEvent('poll_voted', {
-    user_id: user.id,
-    poll_id: pollId,
-    option_id: optionId,
-  })
-  return { voteId: data.id }
+  return { voteId: data.id, isNew: true }
 }
 
 export const updateVote = async (
@@ -194,14 +170,6 @@ export const updateVote = async (
     .update({ option_id: optionId })
     .eq('id', voteId)
   if (error) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    logEvent('poll_vote_error', {
-      user_id: user?.id,
-      vote_id: voteId,
-      error: `Failed to update vote: ${error.message}`,
-    })
     throw error
   }
 }

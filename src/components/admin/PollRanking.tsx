@@ -85,30 +85,24 @@ export const PollRanking = () => {
     try {
       const data = await getActivePollRanking()
       setRanking(data)
-      if (user?.id) {
-        logEvent('admin_poll_ranking_viewed', {
-          user_id: user.id,
-          poll_id: data?.poll_id,
-        })
-      }
+      logEvent('admin_poll_ranking_viewed', { poll_id: data?.poll_id }, 'admin')
     } catch (err) {
       setError('Não foi possível carregar o ranking agora. Tente novamente.')
     } finally {
       setLoading(false)
     }
-  }, [user?.id])
+  }, [])
 
   useEffect(() => {
     fetchRanking()
   }, [fetchRanking])
 
   const handleRefresh = () => {
-    if (user?.id) {
-      logEvent('admin_poll_ranking_refreshed', {
-        user_id: user.id,
-        poll_id: ranking?.poll_id,
-      })
-    }
+    logEvent(
+      'admin_poll_ranking_refreshed',
+      { poll_id: ranking?.poll_id },
+      'admin',
+    )
     fetchRanking()
   }
 

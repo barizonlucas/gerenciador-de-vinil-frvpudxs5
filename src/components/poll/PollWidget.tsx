@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { MessageSquarePlus, Vote } from 'lucide-react'
+import { Vote } from 'lucide-react'
 import { usePoll } from '@/hooks/use-poll'
 import { PollDialog } from './PollDialog'
-import { cn } from '@/lib/utils'
+import { logEvent } from '@/services/telemetry'
 
 export const PollWidget = () => {
   const {
@@ -20,6 +20,7 @@ export const PollWidget = () => {
   const handleOpenDialog = () => {
     markAsInteracted()
     setIsDialogOpen(true)
+    logEvent('poll_widget_opened', { poll_id: poll?.id })
   }
 
   if (loading || error || !poll) {

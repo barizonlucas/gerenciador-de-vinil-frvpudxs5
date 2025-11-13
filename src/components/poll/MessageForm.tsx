@@ -60,14 +60,12 @@ export const MessageForm = ({ onCancel }: MessageFormProps) => {
       await submitMessage(data.message)
       toast.success('✅ Mensagem enviada. Obrigado por contribuir!')
       logEvent('message_sent', {
-        user_id: user?.id,
         message_length: data.message.length,
       })
       reset()
     } catch (error: any) {
       toast.error('Não foi possível enviar agora. Tente novamente.')
       logEvent('message_send_failed', {
-        user_id: user?.id,
         reason: error.message,
       })
     }

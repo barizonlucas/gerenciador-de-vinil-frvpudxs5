@@ -3,20 +3,21 @@ import {
   getActivePoll,
   submitVote,
   updateVote,
-  type ActivePollData,
+  ActivePollData,
 } from '@/services/polls'
 import { toast } from 'sonner'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 
-const POLL_INTERACTION_KEY = 'teko_poll_interaction'
+const POLL_INTERACTED_KEY_PREFIX = 'teko_poll_interacted_'
 
 export const usePoll = () => {
-  const { user } = useAuth()
   const [poll, setPoll] = useState<ActivePollData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showNewBadge, setShowNewBadge] = useState(false)
+
+  const getInteractionKey = (pollId: string) =>
+    `${POLL_INTERACTED_KEY_PREFIX}${pollId}`
 
   const fetchPoll = useCallback(async () => {
     setLoading(true)
@@ -24,12 +25,17 @@ export const usePoll = () => {
     try {
       const data = await getActivePoll()
       setPoll(data)
-      if (!data) {
+      if (data && !data.userVote) {
+        const hasInteracted = localStorage.getItem(getInteractionKey(data.id))
+        if (!hasInteracted) {
+          setShowNewBadge(true)
+        }
+      } else {
         setShowNewBadge(false)
       }
-    } catch (err) {
-      setError('Não foi possível carregar a enquete. Tente novamente.')
-      logEvent('poll_load_error', { reason: (err as Error).message })
+    } catch (err: any) {
+      setError('Não foi possível carregar a enquete.')
+      logEvent('poll_load_error', { reason: err.message })
     } finally {
       setLoading(false)
     }
@@ -39,41 +45,10 @@ export const usePoll = () => {
     fetchPoll()
   }, [fetchPoll])
 
-  useEffect(() => {
-    if (poll) {
-      try {
-        const lastInteraction = localStorage.getItem(
-          `${POLL_INTERACTION_KEY}_${poll.id}`,
-        )
-        if (!lastInteraction) {
-          setShowNewBadge(true)
-        } else {
-          const sevenDaysAgo = new Date()
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-          if (new Date(lastInteraction) < sevenDaysAgo) {
-            setShowNewBadge(true)
-          } else {
-            setShowNewBadge(false)
-          }
-        }
-      } catch (e) {
-        console.error('Failed to read from localStorage', e)
-        setShowNewBadge(true)
-      }
-    }
-  }, [poll])
-
   const markAsInteracted = useCallback(() => {
     if (poll) {
-      try {
-        localStorage.setItem(
-          `${POLL_INTERACTION_KEY}_${poll.id}`,
-          new Date().toISOString(),
-        )
-        setShowNewBadge(false)
-      } catch (e) {
-        console.error('Failed to write to localStorage', e)
-      }
+      localStorage.setItem(getInteractionKey(poll.id), 'true')
+      setShowNewBadge(false)
     }
   }, [poll])
 
@@ -81,54 +56,42 @@ export const usePoll = () => {
     async (optionId: string) => {
       if (!poll) return
 
-      const originalVote = poll.userVote
+      const previousVote = poll.userVote
       const selectedOption = poll.options.find((o) => o.id === optionId)
       if (!selectedOption) return
 
-      // Optimistic update
-      const newVote = {
-        id: originalVote?.id ?? 'temp-id',
-        option_id: optionId,
-        option_key: selectedOption.option_key,
-      }
-      setPoll((prev) => (prev ? { ...prev, userVote: newVote } : null))
-
       try {
-        if (originalVote) {
-          await updateVote(originalVote.id, optionId)
-          toast.success('✅ Voto atualizado.')
+        // submitVote handles both insert and update on conflict
+        await submitVote(poll.id, optionId)
+
+        if (previousVote && previousVote.option_id !== optionId) {
           logEvent('poll_vote_changed', {
-            user_id: user?.id,
             poll_id: poll.id,
-            from_key: originalVote.option_key,
+            from_key: previousVote.option_key,
             to_key: selectedOption.option_key,
           })
-        } else {
-          const { voteId } = await submitVote(poll.id, optionId)
-          setPoll((prev) =>
-            prev ? { ...prev, userVote: { ...newVote, id: voteId } } : null,
-          )
-          toast.success('✅ Obrigado! Seu voto ajuda a priorizar o Teko.')
+          toast.success('Voto alterado com sucesso!')
+        } else if (!previousVote) {
           logEvent('poll_voted', {
-            user_id: user?.id,
             poll_id: poll.id,
             option_key: selectedOption.option_key,
           })
+          toast.success('Obrigado por votar!')
         }
-        markAsInteracted()
-      } catch (err) {
-        // Revert optimistic update on error
-        setPoll((prev) => (prev ? { ...prev, userVote: originalVote } : null))
-        toast.error('Não foi possível votar agora. Tente novamente.')
+
+        await fetchPoll()
+      } catch (err: any) {
+        toast.error('Ocorreu um erro ao registrar seu voto.')
         logEvent('poll_vote_error', {
-          user_id: user?.id,
           poll_id: poll.id,
-          reason: (err as Error).message,
+          option_id: optionId,
+          reason: err.message,
         })
-        throw err // Re-throw to be caught by the component
+        // Re-throw to allow caller to handle UI state (e.g., isSubmitting)
+        throw err
       }
     },
-    [poll, user, markAsInteracted],
+    [poll, fetchPoll],
   )
 
   return {

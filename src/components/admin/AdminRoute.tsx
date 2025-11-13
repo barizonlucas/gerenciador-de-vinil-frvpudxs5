@@ -10,7 +10,7 @@ export const AdminRoute = () => {
 
   useEffect(() => {
     if (!loading && user && profile?.is_admin) {
-      logEvent('admin_accessed', { user_id: user.id })
+      logEvent('admin_accessed', {}, 'admin')
     }
   }, [loading, user, profile])
 

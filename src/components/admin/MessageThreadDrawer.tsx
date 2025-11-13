@@ -84,21 +84,17 @@ export const MessageThreadDrawer = ({
     setLoading(true)
     setError(null)
     try {
-      logEvent('admin_message_opened', {
-        user_id: user?.id,
-        message_id: message.id,
-      })
+      logEvent('admin_message_opened', { message_id: message.id }, 'admin')
       const data = await getMessageThread(message.id)
       setThread(data)
       if (data.message.status === 'new') {
         const updated = await updateMessageStatus(message.id, 'read')
         onUpdate(updated)
-        logEvent('admin_message_status_changed', {
-          user_id: user?.id,
-          message_id: message.id,
-          from: 'new',
-          to: 'read',
-        })
+        logEvent(
+          'admin_message_status_changed',
+          { message_id: message.id, from: 'new', to: 'read' },
+          'admin',
+        )
         toast.info('🟡 Mensagem marcada como lida.')
       }
     } catch (err) {
@@ -106,7 +102,7 @@ export const MessageThreadDrawer = ({
     } finally {
       setLoading(false)
     }
-  }, [message, user?.id, onUpdate])
+  }, [message, onUpdate])
 
   useEffect(() => {
     if (isOpen && message) {
@@ -137,11 +133,11 @@ export const MessageThreadDrawer = ({
           : null,
       )
       onUpdate({ ...thread.message, status: 'replied' })
-      logEvent('admin_message_replied', {
-        user_id: user?.id,
-        message_id: thread.message.id,
-        reply_length: data.reply.length,
-      })
+      logEvent(
+        'admin_message_replied',
+        { message_id: thread.message.id, reply_length: data.reply.length },
+        'admin',
+      )
       toast.success('✅ Resposta enviada com sucesso.')
       reset()
     } catch (err) {
@@ -157,12 +153,15 @@ export const MessageThreadDrawer = ({
         prev ? { ...prev, message: { ...prev.message, status: 'read' } } : null,
       )
       onUpdate(updated)
-      logEvent('admin_message_status_changed', {
-        user_id: user?.id,
-        message_id: thread.message.id,
-        from: thread.message.status,
-        to: 'read',
-      })
+      logEvent(
+        'admin_message_status_changed',
+        {
+          message_id: thread.message.id,
+          from: thread.message.status,
+          to: 'read',
+        },
+        'admin',
+      )
       toast.success('🟡 Mensagem marcada como lida.')
     } catch (err) {
       toast.error('Falha ao marcar como lida.')

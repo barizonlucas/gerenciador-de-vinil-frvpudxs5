@@ -1,11 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { PollRanking } from '@/components/admin/PollRanking'
+import { QuickMetrics } from '@/components/admin/QuickMetrics'
 
 const AdminDashboardPage = () => {
   return (
@@ -17,23 +11,9 @@ const AdminDashboardPage = () => {
         </p>
       </div>
 
-      <PollRanking />
+      <QuickMetrics />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Mensagens Não Lidas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              Responda às mensagens dos colecionadores.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <PollRanking />
     </div>
   )
 }

@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,6 @@ import type { PollOption } from '@/types/poll'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MessageForm } from './MessageForm'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 
 interface PollDialogProps {
   isOpen: boolean
@@ -44,7 +43,6 @@ export const PollDialog = ({
   onVote,
   onRetry,
 }: PollDialogProps) => {
-  const { user } = useAuth()
   const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(
     undefined,
   )
@@ -64,7 +62,18 @@ export const PollDialog = ({
 
   const handleTabChange = (value: string) => {
     if (value === 'message') {
-      logEvent('message_opened', { user_id: user?.id, poll_id: pollData?.id })
+      logEvent('message_opened', { poll_id: pollData?.id })
+    }
+  }
+
+  const handleOptionSelect = (optionId: string) => {
+    setSelectedOptionId(optionId)
+    const option = options.find((o) => o.id === optionId)
+    if (option) {
+      logEvent('poll_option_selected', {
+        poll_id: pollData?.id,
+        option_key: option.option_key,
+      })
     }
   }
 
@@ -113,7 +122,7 @@ export const PollDialog = ({
       <>
         <RadioGroup
           value={selectedOptionId}
-          onValueChange={setSelectedOptionId}
+          onValueChange={handleOptionSelect}
           className="space-y-3 py-4"
         >
           {options.map((option) => (
@@ -231,7 +240,7 @@ const PollSkeleton = () => (
   <div className="space-y-3 py-4">
     {[...Array(3)].map((_, i) => (
       <Card key={i}>
-        <CardContent className="flex items-center gap-4 p-4">
+        <CardHeader className="flex flex-row items-start gap-4 p-4">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-3">
               <Skeleton className="h-6 w-8 rounded-full" />
@@ -241,7 +250,7 @@ const PollSkeleton = () => (
             <Skeleton className="h-4 w-2/3" />
           </div>
           <Skeleton className="h-5 w-5 rounded-full" />
-        </CardContent>
+        </CardHeader>
       </Card>
     ))}
   </div>
