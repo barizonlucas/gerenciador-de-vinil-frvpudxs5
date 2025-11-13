@@ -6,6 +6,21 @@ export interface ActivePollData extends Poll {
   userVote: UserVote | null
 }
 
+export interface PollRankingOption {
+  option_key: string
+  option_title: string
+  votes_total: number
+  pct_total: number
+  votes_7d: number
+  votes_prev_7d: number
+}
+
+export interface PollRankingData {
+  poll_id: string
+  poll_title: string
+  ranking: PollRankingOption[]
+}
+
 // For Admin Panel
 export const getPollData = async (): Promise<Poll | null> => {
   let { data: poll, error } = await supabase
@@ -41,6 +56,24 @@ export const getPollData = async (): Promise<Poll | null> => {
   if (optionsError) throw optionsError
   return { ...poll, options: options || [] }
 }
+
+export const getActivePollRanking =
+  async (): Promise<PollRankingData | null> => {
+    const { data, error } = await supabase.rpc(
+      'get_active_poll_ranking_for_admin',
+    )
+
+    if (error) {
+      console.error('Error fetching poll ranking:', error)
+      throw error
+    }
+
+    if (!data || data.length === 0) {
+      return null
+    }
+
+    return data[0] as PollRankingData
+  }
 
 // For Client Widget
 export const getActivePoll = async (): Promise<ActivePollData | null> => {

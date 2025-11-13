@@ -13,6 +13,8 @@ type TelemetryEvent =
   | 'poll_load_error'
   | 'poll_vote_error'
   | 'poll_vote_conflict'
+  | 'admin_poll_ranking_viewed'
+  | 'admin_poll_ranking_refreshed'
 
 interface TelemetryPayload {
   user_id?: string
