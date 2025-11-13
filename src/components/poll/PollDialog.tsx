@@ -1,17 +1,15 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, AlertTriangle } from 'lucide-react'
 import { useOnlineStatus } from '@/hooks/use-online-status'
@@ -22,6 +20,10 @@ import {
 } from '@/components/ui/tooltip'
 import type { ActivePollData, UserVote } from '@/services/polls'
 import type { PollOption } from '@/types/poll'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MessageForm } from './MessageForm'
+import { logEvent } from '@/services/telemetry'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface PollDialogProps {
   isOpen: boolean
@@ -42,6 +44,7 @@ export const PollDialog = ({
   onVote,
   onRetry,
 }: PollDialogProps) => {
+  const { user } = useAuth()
   const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(
     undefined,
   )
@@ -55,19 +58,21 @@ export const PollDialog = ({
     if (isOpen) {
       setSelectedOptionId(userVote?.option_id)
     } else {
-      // Reset state on close
       setIsSubmitting(false)
     }
   }, [isOpen, userVote])
 
-  const handleSubmit = async () => {
+  const handleTabChange = (value: string) => {
+    if (value === 'message') {
+      logEvent('message_opened', { user_id: user?.id, poll_id: pollData?.id })
+    }
+  }
+
+  const handleSubmitVote = async () => {
     if (!selectedOptionId) return
     setIsSubmitting(true)
     try {
       await onVote(selectedOptionId)
-      // Don't close on success, the dialog state will update
-    } catch {
-      // Error toast is handled in the hook
     } finally {
       setIsSubmitting(false)
     }
@@ -83,7 +88,7 @@ export const PollDialog = ({
 
   const ctaText = userVote ? 'Alterar voto' : 'Votar'
 
-  const renderContent = () => {
+  const renderPollContent = () => {
     if (loading) {
       return <PollSkeleton />
     }
@@ -105,46 +110,29 @@ export const PollDialog = ({
     }
 
     return (
-      <RadioGroup
-        value={selectedOptionId}
-        onValueChange={setSelectedOptionId}
-        className="space-y-3 py-4"
-      >
-        {options.map((option) => (
-          <OptionCard
-            key={option.id}
-            option={option}
-            userVote={userVote}
-            isSelected={selectedOptionId === option.id}
-          />
-        ))}
-      </RadioGroup>
-    )
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{pollData?.title ?? 'Opine no Teko'}</DialogTitle>
-          <DialogDescription>
-            Sua opinião ajuda a definir as próximas novidades.
-            {userVote && (
-              <span className="mt-2 block font-semibold text-primary">
-                Você votou na opção: {userVote.option_key}
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        {renderContent()}
-        <DialogFooter>
+      <>
+        <RadioGroup
+          value={selectedOptionId}
+          onValueChange={setSelectedOptionId}
+          className="space-y-3 py-4"
+        >
+          {options.map((option) => (
+            <OptionCard
+              key={option.id}
+              option={option}
+              userVote={userVote}
+              isSelected={selectedOptionId === option.id}
+            />
+          ))}
+        </RadioGroup>
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Tooltip open={!isOnline ? undefined : false}>
             <TooltipTrigger asChild>
               <div className="inline-block">
-                <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
+                <Button onClick={handleSubmitVote} disabled={isSubmitDisabled}>
                   {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
@@ -156,7 +144,47 @@ export const PollDialog = ({
               <p>Conecte-se para votar</p>
             </TooltipContent>
           </Tooltip>
-        </DialogFooter>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg">
+        <Tabs
+          defaultValue="poll"
+          className="w-full"
+          onValueChange={handleTabChange}
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="poll">Prioridades</TabsTrigger>
+            <TabsTrigger value="message">Mensagem</TabsTrigger>
+          </TabsList>
+          <TabsContent value="poll">
+            <DialogHeader>
+              <DialogTitle>{pollData?.title ?? 'Opine no Teko'}</DialogTitle>
+              <DialogDescription>
+                Sua opinião ajuda a definir as próximas novidades.
+                {userVote && (
+                  <span className="mt-2 block font-semibold text-primary">
+                    Você votou na opção: {userVote.option_key}
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {renderPollContent()}
+          </TabsContent>
+          <TabsContent value="message">
+            <DialogHeader>
+              <DialogTitle>Fale com o Teko</DialogTitle>
+              <DialogDescription>
+                Ideias, dúvidas ou feedback — queremos ouvir você.
+              </DialogDescription>
+            </DialogHeader>
+            <MessageForm onCancel={onClose} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )
