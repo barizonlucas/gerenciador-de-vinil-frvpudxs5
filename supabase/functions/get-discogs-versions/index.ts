@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       }
     })
 
-    const sorted = formattedVersions.sort((a, b) => {
+    const sorted = formattedVersions.sort((a: any, b: any) => {
       const aIsBrazil = a.country?.toLowerCase() === 'brazil'
       const bIsBrazil = b.country?.toLowerCase() === 'brazil'
       if (aIsBrazil && !bIsBrazil) return -1

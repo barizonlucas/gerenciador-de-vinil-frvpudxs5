@@ -64,14 +64,12 @@ export const identifyAlbumCover = async (
 
   const contentType = response.headers.get('Content-Type') ?? ''
   let payload: unknown = null
-  let rawText: string | null = null
 
   try {
     if (contentType.includes('application/json')) {
       payload = await response.json()
     } else {
-      rawText = await response.text()
-      payload = rawText
+      payload = await response.text()
     }
   } catch (parseErr) {
     console.error('Falha ao ler resposta identify-album-cover:', parseErr)

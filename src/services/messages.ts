@@ -28,7 +28,7 @@ export const getAdminMessages = async (): Promise<UserMessage[]> => {
     console.error('Error fetching admin messages:', error)
     throw error
   }
-  return (data as UserMessage[]) || []
+  return (data as unknown as UserMessage[]) || []
 }
 
 export const getMessageThread = async (

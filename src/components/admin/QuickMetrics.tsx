@@ -7,7 +7,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
 } from 'recharts'
 import {
   RefreshCw,
@@ -25,7 +24,6 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -35,7 +33,6 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 import { getQuickMetrics, QuickMetricsData } from '@/services/metrics'
-import { useAuth } from '@/contexts/AuthContext'
 import { logEvent } from '@/services/telemetry'
 import { toast } from 'sonner'
 
@@ -82,7 +79,6 @@ const MetricCard = ({
 }
 
 export const QuickMetrics = () => {
-  const { user } = useAuth()
   const [metrics, setMetrics] = useState<QuickMetricsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -106,7 +102,7 @@ export const QuickMetrics = () => {
   }, [fetchMetrics])
 
   const handleRefresh = () => {
-    logEvent('admin_metrics_refreshed', { user_id: user?.id }, 'admin')
+    logEvent('admin_metrics_refreshed', {}, 'admin')
     fetchMetrics()
   }
 
@@ -159,8 +155,9 @@ export const QuickMetrics = () => {
         <MetricCard
           title="Conversão em voto (7d)"
           value={
-            metrics?.cards.voteConversion7d !== null
-              ? `${metrics?.cards.voteConversion7d}%`
+            metrics?.cards.voteConversion7d !== null &&
+            metrics?.cards.voteConversion7d !== undefined
+              ? `${metrics.cards.voteConversion7d}%`
               : null
           }
           description="Dos que abriram, % que votaram."
@@ -170,8 +167,9 @@ export const QuickMetrics = () => {
         <MetricCard
           title="Troca de voto (%) (7d)"
           value={
-            metrics?.cards.voteChangePct7d !== null
-              ? `${metrics?.cards.voteChangePct7d}%`
+            metrics?.cards.voteChangePct7d !== null &&
+            metrics?.cards.voteChangePct7d !== undefined
+              ? `${metrics.cards.voteChangePct7d}%`
               : null
           }
           description="% de votos que foram alterados."

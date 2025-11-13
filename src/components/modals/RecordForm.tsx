@@ -128,7 +128,7 @@ export const RecordForm = ({
     if (result.coverArtUrl) {
       form.setValue('coverArtUrl', result.coverArtUrl)
     }
-    form.setValue('master_id', result.id.toString())
+    form.setValue('master_id', (result.masterId ?? result.id).toString())
   }
 
   const handleFormSubmit = async (data: RecordFormValues) => {

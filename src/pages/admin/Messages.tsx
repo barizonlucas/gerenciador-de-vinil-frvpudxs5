@@ -31,13 +31,11 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { getAdminMessages } from '@/services/messages'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 import { UserMessage, MessageStatus } from '@/types/messages'
 import { MessageStatusBadge } from '@/components/admin/MessageStatusBadge'
 import { MessageThreadDrawer } from '@/components/admin/MessageThreadDrawer'
 
 const AdminMessagesPage = () => {
-  const { user } = useAuth()
   const isOnline = useOnlineStatus()
   const [messages, setMessages] = useState<UserMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,17 +53,20 @@ const AdminMessagesPage = () => {
     try {
       const data = await getAdminMessages()
       setMessages(data)
-      logEvent('admin_inbox_viewed', {
-        user_id: user?.id,
-        total_messages: data.length,
-        unread_count: data.filter((m) => m.status === 'new').length,
-      })
+      logEvent(
+        'admin_inbox_viewed',
+        {
+          total_messages: data.length,
+          unread_count: data.filter((m) => m.status === 'new').length,
+        },
+        'admin',
+      )
     } catch (err) {
       setError('Não foi possível carregar as mensagens.')
     } finally {
       setLoading(false)
     }
-  }, [user?.id])
+  }, [])
 
   useEffect(() => {
     if (isOnline) {
@@ -93,19 +94,22 @@ const AdminMessagesPage = () => {
   const handleStatusFilterChange = (value: string) => {
     const newStatus = value as MessageStatus | 'all'
     setStatusFilter(newStatus)
-    logEvent('admin_inbox_filtered', {
-      user_id: user?.id,
-      filter: { status: newStatus },
-    })
+    logEvent('admin_inbox_filtered', { filter: { status: newStatus } }, 'admin')
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
-    logEvent('admin_inbox_filtered', {
-      user_id: user?.id,
-      filter: { search: e.target.value },
-    })
   }
+
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      logEvent(
+        'admin_inbox_filtered',
+        { filter: { search: debouncedSearchTerm } },
+        'admin',
+      )
+    }
+  }, [debouncedSearchTerm])
 
   const handleUpdateMessage = (updatedMessage: UserMessage) => {
     setMessages((prev) =>

@@ -22,7 +22,6 @@ import {
 import { submitMessage } from '@/services/messages'
 import { toast } from 'sonner'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 
 const messageSchema = z.object({
   message: z
@@ -38,7 +37,6 @@ interface MessageFormProps {
 }
 
 export const MessageForm = ({ onCancel }: MessageFormProps) => {
-  const { user } = useAuth()
   const isOnline = useOnlineStatus()
   const form = useForm<MessageFormValues>({
     resolver: zodResolver(messageSchema),

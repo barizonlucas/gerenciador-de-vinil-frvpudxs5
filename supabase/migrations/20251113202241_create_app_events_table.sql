@@ -40,3 +40,4 @@ create policy admin_can_select_all_events
 on public.app_events
 for select
 using (is_admin());
+

@@ -18,4 +18,3 @@ FOR UPDATE USING (is_admin() AND auth.uid() = admin_user_id);
 -- Admins can delete their own replies.
 CREATE POLICY admin_can_delete_own_replies ON public.user_message_replies
 FOR DELETE USING (is_admin() AND auth.uid() = admin_user_id);
-

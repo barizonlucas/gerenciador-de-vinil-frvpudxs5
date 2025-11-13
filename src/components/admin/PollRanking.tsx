@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getActivePollRanking, PollRankingData } from '@/services/polls'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 import {
   Card,
   CardContent,
@@ -74,7 +73,6 @@ const TrendIndicator = ({
 }
 
 export const PollRanking = () => {
-  const { user } = useAuth()
   const [ranking, setRanking] = useState<PollRankingData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

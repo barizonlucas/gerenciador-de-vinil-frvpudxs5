@@ -5,7 +5,6 @@ import * as z from 'zod'
 import { Poll } from '@/types/poll'
 import { upsertPoll, activatePoll, deactivatePoll } from '@/services/polls'
 import { logEvent } from '@/services/telemetry'
-import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -65,7 +64,6 @@ interface PollFormProps {
 }
 
 export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
-  const { user } = useAuth()
   const [poll, setPoll] = useState<Poll | null>(initialPoll)
   const [isLoading, setIsLoading] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -115,17 +113,15 @@ export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
 
       if (activate) {
         await activatePoll(savedPoll.id)
-        logEvent('admin_poll_activated', {
-          user_id: user?.id,
-          poll_id: savedPoll.id,
-        })
+        logEvent('admin_poll_activated', { poll_id: savedPoll.id }, 'admin')
         toast.success('✅ Enquete ativada')
       } else {
         toast.success('✅ Enquete salva')
-        logEvent(isNewPoll ? 'admin_poll_created' : 'admin_poll_updated', {
-          user_id: user?.id,
-          poll_id: savedPoll.id,
-        })
+        logEvent(
+          isNewPoll ? 'admin_poll_created' : 'admin_poll_updated',
+          { poll_id: savedPoll.id },
+          'admin',
+        )
       }
 
       setPoll(savedPoll)
@@ -145,10 +141,7 @@ export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
       const updatedPoll = { ...poll, is_active: false }
       setPoll(updatedPoll)
       onPollUpdate(updatedPoll)
-      logEvent('admin_poll_deactivated', {
-        user_id: user?.id,
-        poll_id: poll.id,
-      })
+      logEvent('admin_poll_deactivated', { poll_id: poll.id }, 'admin')
       toast.success('✅ Enquete desativada')
     } catch (error) {
       toast.error('Não foi possível desativar. Tente novamente.')

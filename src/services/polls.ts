@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
 import { Poll, PollOption, UserVote } from '@/types/poll'
-import { logEvent } from './telemetry'
 
 export interface ActivePollData extends Poll {
   userVote: UserVote | null

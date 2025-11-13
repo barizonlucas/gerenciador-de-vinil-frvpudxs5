@@ -4,3 +4,4 @@
 CREATE UNIQUE INDEX feature_polls_only_one_active
 ON public.feature_polls (is_active)
 WHERE (is_active = true);
+

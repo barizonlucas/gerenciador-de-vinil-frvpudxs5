@@ -322,16 +322,10 @@ const DashboardPage = () => {
     }
   }, [
     stats.totalRecords,
-    stats.topGenre?.label,
-    stats.topGenre?.count,
-    stats.topGenre?.percentage,
-    stats.topArtist?.label,
-    stats.topArtist?.count,
-    stats.topArtist?.percentage,
-    stats.topDecade?.decade,
-    stats.topDecade?.share,
-    stats.topCountry?.label,
-    stats.topCountry?.share,
+    stats.topGenre,
+    stats.topArtist,
+    stats.topDecade,
+    stats.topCountry,
   ])
 
   useEffect(() => {

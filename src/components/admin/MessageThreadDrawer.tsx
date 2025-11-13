@@ -33,11 +33,11 @@ import {
   replyToMessage,
   updateMessageStatus,
 } from '@/services/messages'
-import { useAuth } from '@/contexts/AuthContext'
 import { logEvent } from '@/services/telemetry'
 import { toast } from 'sonner'
 import { Loader2, Send, User as UserIcon } from 'lucide-react'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { supabase } from '@/lib/supabase/client'
 
 const replySchema = z.object({
   reply: z
@@ -60,7 +60,6 @@ export const MessageThreadDrawer = ({
   message,
   onUpdate,
 }: MessageThreadDrawerProps) => {
-  const { user } = useAuth()
   const isOnline = useOnlineStatus()
   const [thread, setThread] = useState<MessageThread | null>(null)
   const [loading, setLoading] = useState(true)

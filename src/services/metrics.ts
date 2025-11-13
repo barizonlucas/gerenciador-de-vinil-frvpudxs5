@@ -62,7 +62,6 @@ export const getQuickMetrics = async (): Promise<QuickMetricsData> => {
     for (const [key, result] of Object.entries(results)) {
       if (result.error) {
         console.error(`Error fetching quick metric "${key}":`, result.error)
-        // We can decide to throw or return partial data. Let's throw for now.
         throw new Error(`Failed to fetch metric: ${key}`)
       }
     }
@@ -76,11 +75,11 @@ export const getQuickMetrics = async (): Promise<QuickMetricsData> => {
     }
 
     const charts = {
-      widgetOpens14d: (results.widgetOpens14d.data || []).map((item) => ({
+      widgetOpens14d: (results.widgetOpens14d.data || []).map((item: any) => ({
         date: formatDateForChart(item.dia),
         count: item.count,
       })),
-      messages14d: (results.messages14d.data || []).map((item) => ({
+      messages14d: (results.messages14d.data || []).map((item: any) => ({
         date: formatDateForChart(item.dia),
         count: item.count,
       })),

@@ -6,21 +6,21 @@
 create or replace function get_quick_metrics_widget_opens_7d()
 returns table(count bigint)
 language plpgsql
-as $$
+as $
 begin
   return query
   select count(*) from public.app_events
   where event_name = 'poll_widget_opened'
   and created_at >= now() - interval '7 days';
 end;
-$$;
+$;
 
 -- Function to calculate the vote conversion rate in the last 7 days.
 -- Conversion is defined as the percentage of users who opened the widget and then voted.
 create or replace function get_quick_metrics_vote_conversion_7d()
 returns table(conversion_pct numeric)
 language plpgsql
-as $$
+as $
 begin
   return query
   with opens as (
@@ -43,13 +43,13 @@ begin
       else round(100.0 * (select count(*) from voters)::numeric / (select count(*) from opens), 2)
     end;
 end;
-$$;
+$;
 
 -- Function to calculate the percentage of votes that were changed in the last 7 days.
 create or replace function get_quick_metrics_vote_change_pct_7d()
 returns table(pct_over_votes numeric)
 language plpgsql
-as $$
+as $
 begin
   return query
   select
@@ -59,25 +59,25 @@ begin
   where event_name = 'poll_vote_changed'
     and created_at >= now() - interval '7 days';
 end;
-$$;
+$;
 
 -- Function to get the total count of messages received in the last 7 days.
 create or replace function get_quick_metrics_messages_received_7d()
 returns table(count bigint)
 language plpgsql
-as $$
+as $
 begin
   return query
   select count(*) from public.user_messages
   where created_at >= now() - interval '7 days';
 end;
-$$;
+$;
 
 -- Function to calculate the average time to the first reply for user messages, in minutes.
 create or replace function get_quick_metrics_avg_first_reply_time()
 returns table(avg_minutes numeric)
 language plpgsql
-as $$
+as $
 begin
   return query
   with first_reply as (
@@ -93,13 +93,13 @@ begin
   from public.user_messages m
   join first_reply f on f.message_id = m.id;
 end;
-$$;
+$;
 
 -- Function to provide data for the widget opens chart (last 14 days).
 create or replace function get_quick_metrics_widget_opens_chart_14d()
 returns table(dia date, count bigint)
 language plpgsql
-as $$
+as $
 begin
   return query
   select
@@ -111,13 +111,13 @@ begin
   group by 1
   order by 1;
 end;
-$$;
+$;
 
 -- Function to provide data for the messages received chart (last 14 days).
 create or replace function get_quick_metrics_messages_chart_14d()
 returns table(dia date, count bigint)
 language plpgsql
-as $$
+as $
 begin
   return query
   select
@@ -128,4 +128,5 @@ begin
   group by 1
   order by 1;
 end;
-$$;
+$;
+

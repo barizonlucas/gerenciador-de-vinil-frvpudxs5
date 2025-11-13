@@ -16,6 +16,10 @@ export type TelemetryEvent =
   | 'admin_message_opened'
   | 'admin_message_replied'
   | 'admin_message_status_changed'
+  | 'admin_poll_created'
+  | 'admin_poll_updated'
+  | 'admin_poll_activated'
+  | 'admin_poll_deactivated'
   // Error Events
   | 'poll_load_error'
   | 'poll_vote_error'

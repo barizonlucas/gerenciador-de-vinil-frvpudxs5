@@ -7,3 +7,4 @@ ADD COLUMN option_key TEXT NOT NULL DEFAULT '';
 -- This prevents duplicate option keys (e.g., two 'A' options) for the same poll.
 ALTER TABLE public.feature_poll_options
 ADD CONSTRAINT feature_poll_options_poll_id_option_key_key UNIQUE (poll_id, option_key);
+
