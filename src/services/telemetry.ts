@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabase/client'
 
-type TelemetryEvent = 'admin_accessed'
+type TelemetryEvent =
+  | 'admin_accessed'
+  | 'admin_poll_created'
+  | 'admin_poll_updated'
+  | 'admin_poll_activated'
+  | 'admin_poll_deactivated'
 
 interface TelemetryPayload {
   user_id?: string
