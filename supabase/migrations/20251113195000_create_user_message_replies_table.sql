@@ -16,4 +16,3 @@ create trigger on_user_message_replies_updated
 before update on public.user_message_replies
 for each row
 execute function public.trigger_set_timestamp();
-

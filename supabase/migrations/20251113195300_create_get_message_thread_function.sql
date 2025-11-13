@@ -16,7 +16,7 @@ CREATE OR REPLACE FUNCTION public.get_message_thread(p_message_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 DECLARE
   thread_message public.admin_message_view;
   thread_replies public.admin_reply_view[];
@@ -51,5 +51,4 @@ BEGIN
     'replies', COALESCE(array_to_json(thread_replies), '[]'::json)
   );
 END;
-$;
-
+$$;

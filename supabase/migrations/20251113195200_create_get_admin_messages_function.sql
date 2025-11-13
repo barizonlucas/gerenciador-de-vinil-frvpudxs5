@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION public.get_admin_messages()
 RETURNS SETOF public.admin_message_view
 LANGUAGE plpgsql
 SECURITY DEFINER -- Important for accessing auth.users
-AS $
+AS $$
 BEGIN
   -- Check if the caller is an admin.
   IF NOT is_admin() THEN
@@ -43,5 +43,4 @@ BEGIN
   LEFT JOIN
     public.profiles p ON m.user_id = p.user_id;
 END;
-$;
-
+$$;
