@@ -41,27 +41,33 @@ export const PollPreviewModal = ({
               <CardTitle className="text-lg">{poll.title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {poll.options.map((option, index) => (
-                <div
-                  key={option.id || `option-${index}`}
-                  className="flex items-start gap-4 rounded-lg border p-3"
-                >
-                  <Badge
-                    variant="outline"
-                    className="text-lg font-bold h-8 w-8 flex items-center justify-center"
+              {poll.options && poll.options.length > 0 ? (
+                poll.options.map((option, index) => (
+                  <div
+                    key={option.id || `option-${index}`}
+                    className="flex items-start gap-4 rounded-lg border p-3"
                   >
-                    {optionLetters[index]}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="font-semibold">{option.title}</p>
-                    {option.short_desc && (
-                      <p className="text-sm text-muted-foreground">
-                        {option.short_desc}
-                      </p>
-                    )}
+                    <Badge
+                      variant="outline"
+                      className="text-lg font-bold h-8 w-8 flex items-center justify-center"
+                    >
+                      {optionLetters[index]}
+                    </Badge>
+                    <div className="flex-1">
+                      <p className="font-semibold">{option.title}</p>
+                      {option.short_desc && (
+                        <p className="text-sm text-muted-foreground">
+                          {option.short_desc}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Esta enquete não possui opções para exibir.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
