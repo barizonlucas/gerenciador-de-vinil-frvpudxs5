@@ -45,6 +45,7 @@ const optionSchema = z.object({
     .max(140, 'A descrição curta deve ter no máximo 140 caracteres.')
     .optional()
     .nullable(),
+  option_key: z.string(), // Will be 'A', 'B', 'C'
 })
 
 const pollSchema = z.object({
@@ -81,14 +82,19 @@ export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
 
   useEffect(() => {
     const defaultOptions = [
-      { title: '', short_desc: '' },
-      { title: '', short_desc: '' },
-      { title: '', short_desc: '' },
+      { title: '', short_desc: '', option_key: 'A' },
+      { title: '', short_desc: '', option_key: 'B' },
+      { title: '', short_desc: '', option_key: 'C' },
     ]
+    const pollOptions =
+      poll?.options?.length === 3 ? poll.options : defaultOptions
     form.reset({
       id: poll?.id,
       title: poll?.title || '',
-      options: poll?.options?.length === 3 ? poll.options : defaultOptions,
+      options: pollOptions.map((opt, i) => ({
+        ...opt,
+        option_key: ['A', 'B', 'C'][i],
+      })),
     })
   }, [poll, form])
 
@@ -151,8 +157,6 @@ export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
     }
   }
 
-  const optionLetters = ['A', 'B', 'C']
-
   return (
     <>
       <Form {...form}>
@@ -199,9 +203,7 @@ export const PollForm = ({ initialPoll, onPollUpdate }: PollFormProps) => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {fields.map((field, index) => (
                   <div key={field.id} className="space-y-4">
-                    <h3 className="font-semibold">
-                      Opção {optionLetters[index]}
-                    </h3>
+                    <h3 className="font-semibold">Opção {field.option_key}</h3>
                     <FormField
                       control={form.control}
                       name={`options.${index}.title`}

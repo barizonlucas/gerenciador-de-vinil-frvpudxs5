@@ -6,6 +6,12 @@ type TelemetryEvent =
   | 'admin_poll_updated'
   | 'admin_poll_activated'
   | 'admin_poll_deactivated'
+  | 'poll_widget_opened'
+  | 'poll_option_selected'
+  | 'poll_voted'
+  | 'poll_vote_changed'
+  | 'poll_load_error'
+  | 'poll_vote_error'
 
 interface TelemetryPayload {
   user_id?: string

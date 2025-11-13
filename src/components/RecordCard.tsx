@@ -38,8 +38,16 @@ export const RecordCard = ({
     .filter(Boolean)
     .join(' • ')
 
+  const handleSelectVersionClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onSelectVersion(record)
+  }
+
   return (
-    <Card className="w-full overflow-hidden transition-shadow hover:shadow-md">
+    <Card
+      className="w-full overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
+      onClick={() => onView(record)}
+    >
       <CardHeader className="p-0">
         <div className="h-48 w-full bg-muted flex items-center justify-center">
           {record.coverArtUrl ? (
@@ -61,7 +69,7 @@ export const RecordCard = ({
             variant="link"
             size="sm"
             className="p-0 h-auto mt-1 text-primary"
-            onClick={() => onSelectVersion(record)}
+            onClick={handleSelectVersionClick}
           >
             Selecionar Versão
           </Button>
@@ -80,6 +88,7 @@ export const RecordCard = ({
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full"
+              onClick={(e) => e.stopPropagation()}
             >
               <MoreVertical className="h-4 w-4" />
             </Button>

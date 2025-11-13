@@ -4,6 +4,7 @@ export interface PollOption {
   title: string
   short_desc: string | null
   created_at: string
+  option_key: string
 }
 
 export interface Poll {
@@ -13,4 +14,10 @@ export interface Poll {
   created_at: string
   updated_at: string
   options: PollOption[]
+}
+
+export interface UserVote {
+  id: string // vote id
+  option_id: string
+  option_key: string
 }

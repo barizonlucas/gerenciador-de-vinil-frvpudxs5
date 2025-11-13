@@ -1,15 +1,18 @@
 import { supabase } from '@/lib/supabase/client'
-import { Poll, PollOption } from '@/types/poll'
+import { Poll, PollOption, UserVote } from '@/types/poll'
 
+export interface ActivePollData extends Poll {
+  userVote: UserVote | null
+}
+
+// For Admin Panel
 export const getPollData = async (): Promise<Poll | null> => {
-  // First, try to get the active poll
   let { data: poll, error } = await supabase
     .from('feature_polls')
     .select('*')
     .eq('is_active', true)
     .single()
 
-  // If no active poll, get the most recently updated draft
   if (error || !poll) {
     const { data: latestDraft, error: draftError } = await supabase
       .from('feature_polls')
@@ -26,63 +29,130 @@ export const getPollData = async (): Promise<Poll | null> => {
     poll = latestDraft
   }
 
-  if (!poll) {
-    return null
-  }
+  if (!poll) return null
 
-  // Fetch options for the poll
   const { data: options, error: optionsError } = await supabase
     .from('feature_poll_options')
     .select('*')
     .eq('poll_id', poll.id)
     .order('created_at', { ascending: true })
 
-  if (optionsError) {
-    console.error('Error fetching poll options:', optionsError)
-    throw optionsError
-  }
-
+  if (optionsError) throw optionsError
   return { ...poll, options: options || [] }
 }
 
+// For Client Widget
+export const getActivePoll = async (): Promise<ActivePollData | null> => {
+  const { data: poll, error: pollError } = await supabase
+    .from('feature_polls')
+    .select('id, title, is_active, created_at, updated_at')
+    .eq('is_active', true)
+    .single()
+
+  if (pollError && pollError.code !== 'PGRST116') throw pollError
+  if (!poll) return null
+
+  const { data: options, error: optionsError } = await supabase
+    .from('feature_poll_options')
+    .select('id, poll_id, title, short_desc, created_at, option_key')
+    .eq('poll_id', poll.id)
+    .order('option_key', { ascending: true })
+
+  if (optionsError) throw optionsError
+
+  const { data: vote, error: voteError } = await supabase
+    .from('feature_poll_votes')
+    .select('id, option_id, option:feature_poll_options(option_key)')
+    .eq('poll_id', poll.id)
+    .single()
+
+  if (voteError && voteError.code !== 'PGRST116') throw voteError
+
+  const userVote = vote
+    ? {
+        id: vote.id,
+        option_id: vote.option_id,
+        option_key: (vote.option as any)?.option_key ?? '',
+      }
+    : null
+
+  return { ...poll, options: options || [], userVote }
+}
+
+export const submitVote = async (
+  pollId: string,
+  optionId: string,
+): Promise<{ voteId: string }> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('User not authenticated')
+
+  const { data, error } = await supabase
+    .from('feature_poll_votes')
+    .insert({ poll_id: pollId, option_id: optionId, user_id: user.id })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') {
+      // Unique constraint violation, meaning vote already exists. Try to update.
+      const { data: existingVote, error: selectError } = await supabase
+        .from('feature_poll_votes')
+        .select('id')
+        .eq('poll_id', pollId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (selectError || !existingVote) {
+        throw (
+          selectError || new Error('Failed to find existing vote to update.')
+        )
+      }
+      await updateVote(existingVote.id, optionId)
+      return { voteId: existingVote.id }
+    }
+    throw error
+  }
+  return { voteId: data.id }
+}
+
+export const updateVote = async (
+  voteId: string,
+  optionId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from('feature_poll_votes')
+    .update({ option_id: optionId })
+    .eq('id', voteId)
+  if (error) throw error
+}
+
+// For Admin Panel
 export const upsertPoll = async (
   pollData: Partial<Poll>,
 ): Promise<Poll | null> => {
   const { options, ...pollFields } = pollData
-
-  // Upsert the poll
   const { data: savedPoll, error: pollError } = await supabase
     .from('feature_polls')
     .upsert(pollFields)
     .select()
     .single()
+  if (pollError) throw pollError
+  if (!options || options.length === 0) return { ...savedPoll, options: [] }
 
-  if (pollError) {
-    console.error('Error upserting poll:', pollError)
-    throw pollError
-  }
-
-  if (!options || options.length === 0) {
-    return { ...savedPoll, options: [] }
-  }
-
-  // Upsert the options
-  const optionsToUpsert = options.map((opt) => ({
+  const optionsToUpsert = options.map((opt, i) => ({
     ...opt,
     poll_id: savedPoll.id,
+    option_key: ['A', 'B', 'C'][i],
   }))
 
   const { data: savedOptions, error: optionsError } = await supabase
     .from('feature_poll_options')
     .upsert(optionsToUpsert)
     .select()
-    .order('created_at', { ascending: true })
-
-  if (optionsError) {
-    console.error('Error upserting poll options:', optionsError)
-    throw optionsError
-  }
-
+    .order('option_key', { ascending: true })
+  if (optionsError) throw optionsError
   return { ...savedPoll, options: savedOptions }
 }
 
@@ -90,10 +160,7 @@ export const activatePoll = async (pollId: string): Promise<void> => {
   const { error } = await supabase.rpc('activate_feature_poll', {
     p_poll_id: pollId,
   })
-  if (error) {
-    console.error('Error activating poll:', error)
-    throw error
-  }
+  if (error) throw error
 }
 
 export const deactivatePoll = async (pollId: string): Promise<void> => {
@@ -101,9 +168,5 @@ export const deactivatePoll = async (pollId: string): Promise<void> => {
     .from('feature_polls')
     .update({ is_active: false })
     .eq('id', pollId)
-
-  if (error) {
-    console.error('Error deactivating poll:', error)
-    throw error
-  }
+  if (error) throw error
 }

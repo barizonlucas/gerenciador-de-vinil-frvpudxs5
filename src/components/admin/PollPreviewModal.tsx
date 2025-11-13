@@ -24,8 +24,6 @@ export const PollPreviewModal = ({
 }: PollPreviewModalProps) => {
   if (!poll) return null
 
-  const optionLetters = ['A', 'B', 'C']
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -42,16 +40,16 @@ export const PollPreviewModal = ({
             </CardHeader>
             <CardContent className="space-y-3">
               {poll.options && poll.options.length > 0 ? (
-                poll.options.map((option, index) => (
+                poll.options.map((option) => (
                   <div
-                    key={option.id || `option-${index}`}
+                    key={option.id || `option-${option.option_key}`}
                     className="flex items-start gap-4 rounded-lg border p-3"
                   >
                     <Badge
                       variant="outline"
                       className="text-lg font-bold h-8 w-8 flex items-center justify-center"
                     >
-                      {optionLetters[index]}
+                      {option.option_key}
                     </Badge>
                     <div className="flex-1">
                       <p className="font-semibold">{option.title}</p>
