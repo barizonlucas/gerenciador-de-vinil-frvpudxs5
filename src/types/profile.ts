@@ -4,4 +4,5 @@ export interface Profile {
   display_name: string | null
   avatar_url: string | null
   theme_preference: 'light' | 'dark'
+  is_admin: boolean
 }

@@ -16,6 +16,12 @@ import UpdatePasswordPage from './pages/Auth/UpdatePassword'
 import ProfilePage from './pages/Profile'
 import DashboardPage from './pages/Dashboard'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { AdminRoute } from './components/admin/AdminRoute'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboardPage from './pages/admin/Index'
+import AdminPollsPage from './pages/admin/Polls'
+import AdminMessagesPage from './pages/admin/Messages'
+import UnauthorizedPage from './pages/Unauthorized'
 
 export default function App() {
   return (
@@ -34,6 +40,13 @@ export default function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                   </Route>
                 </Route>
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboardPage />} />
+                    <Route path="polls" element={<AdminPollsPage />} />
+                    <Route path="messages" element={<AdminMessagesPage />} />
+                  </Route>
+                </Route>
                 <Route element={<PublicRoute />}>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
@@ -46,6 +59,7 @@ export default function App() {
                   path="/update-password"
                   element={<UpdatePasswordPage />}
                 />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </VinylCollectionProvider>

@@ -1,5 +1,12 @@
 import { Link, NavLink } from 'react-router-dom'
-import { LogOut, User as UserIcon, Plus, DiscAlbum, Camera } from 'lucide-react'
+import {
+  LogOut,
+  User as UserIcon,
+  Plus,
+  DiscAlbum,
+  Camera,
+  ShieldCheck,
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   DropdownMenu,
@@ -74,6 +81,11 @@ export const Header = () => {
           <NavLink to="/profile" className={navLinkClass}>
             Perfil
           </NavLink>
+          {profile?.is_admin && (
+            <NavLink to="/admin" className={navLinkClass}>
+              Admin
+            </NavLink>
+          )}
         </nav>
         <div className="flex flex-1 items-center justify-end gap-2">
           <Button onClick={openAddModal}>
@@ -130,6 +142,14 @@ export const Header = () => {
                     <span>Perfil</span>
                   </Link>
                 </DropdownMenuItem>
+                {profile?.is_admin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      <span>Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
