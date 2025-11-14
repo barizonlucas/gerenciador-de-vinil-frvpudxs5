@@ -2,14 +2,14 @@ export type MessageStatus = 'new' | 'read' | 'replied'
 
 export interface UserMessage {
   id: string
-  user_id: string
+  user_id?: string
   message: string
-  status: MessageStatus
+  status: 'new' | 'read' | 'replied'
   created_at: string
-  updated_at: string
-  user_email: string | null
-  user_display_name: string | null
-  user_avatar_url: string | null
+  updated_at?: string
+  user_email?: string | null
+  user_display_name?: string | null
+  user_avatar_url?: string | null
 }
 
 export interface MessageReply {

@@ -78,11 +78,18 @@ export const MessageThreadDrawer = ({
   const replyValue = watch('reply')
   const charCount = replyValue?.length || 0
 
+  const isUuid = (s: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
+
   const fetchThread = useCallback(async () => {
     if (!message) return
     setLoading(true)
     setError(null)
     try {
+      if (!isUuid(message.id)) {
+      console.error('Message com id inválido:', message)   // 🔎 vai te mostrar se id==texto
+      throw new Error('ID de mensagem inválido')
+    }
       logEvent('admin_message_opened', { message_id: message.id }, 'admin')
       const data = await getMessageThread(message.id)
       setThread(data)

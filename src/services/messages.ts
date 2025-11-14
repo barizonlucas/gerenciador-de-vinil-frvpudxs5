@@ -5,6 +5,7 @@ import {
   MessageThread,
   MessageStatus,
 } from '@/types/messages'
+import type { AdminMessage } from '@/types/messages'
 
 export const submitMessage = async (message: string): Promise<void> => {
   const {
@@ -22,13 +23,22 @@ export const submitMessage = async (message: string): Promise<void> => {
   }
 }
 
-export const getAdminMessages = async (): Promise<UserMessage[]> => {
+export const getAdminMessages = async (): Promise<AdminMessage[]> => {
   const { data, error } = await supabase.rpc('get_admin_messages')
   if (error) {
     console.error('Error fetching admin messages:', error)
     throw error
   }
-  return (data as unknown as UserMessage[]) || []
+
+  const rows = (data ?? []) as AdminMessage[]
+  return rows.map(r => ({
+    id: r.id,
+    message: r.message,
+    status: r.status,
+    created_at: r.created_at,
+    user_email: r.user_email,
+    user_display_name: r.user_display_name,
+  }))
 }
 
 export const getMessageThread = async (

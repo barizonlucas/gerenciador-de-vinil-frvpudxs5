@@ -37,7 +37,7 @@ import { MessageThreadDrawer } from '@/components/admin/MessageThreadDrawer'
 
 const AdminMessagesPage = () => {
   const isOnline = useOnlineStatus()
-  const [messages, setMessages] = useState<UserMessage[]>([])
+  const [messages, setMessages] = useState<AdminMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
