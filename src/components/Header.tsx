@@ -60,18 +60,18 @@ export const Header = () => {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'text-sm font-medium transition-colors hover:text-primary',
-      isActive ? 'text-primary' : 'text-muted-foreground',
+      'text-sm font-semibold transition-colors',
+      isActive ? 'text-areia' : 'text-areia/80 hover:text-areia',
     )
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <Link to="/" className="mr-6 flex items-center gap-2">
-          <DiscAlbum className="h-6 w-6 text-primary" />
-          <span className="font-bold">Teko</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-azulPetroleo text-areia shadow-brand">
+      <div className="container flex h-16 items-center justify-between gap-4">
+        <Link to="/" className="mr-6 flex items-center gap-2 text-areia">
+          <DiscAlbum className="h-6 w-6" />
+          <span className="font-bold tracking-wide">Teko</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden items-center gap-6 md:flex">
           <NavLink to="/" className={navLinkClass}>
             Início
           </NavLink>
@@ -87,7 +87,7 @@ export const Header = () => {
             </NavLink>
           )}
         </nav>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2 text-areia">
           <Button onClick={openAddModal}>
             <Plus className="mr-2 h-4 w-4" /> Adicionar Novo Disco
           </Button>
@@ -101,13 +101,13 @@ export const Header = () => {
               <p>Adicionar por foto</p>
             </TooltipContent>
           </Tooltip>
-          <ThemeToggle />
+          <ThemeToggle className="text-areia hover:bg-areia/20" />
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full"
+                  className="relative h-10 w-10 rounded-full text-areia hover:bg-areia/20"
                 >
                   <Avatar>
                     <AvatarImage

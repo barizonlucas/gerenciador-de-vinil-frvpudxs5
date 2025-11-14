@@ -11,21 +11,18 @@ export const MessageStatusBadge = ({ status }: MessageStatusBadgeProps) => {
   const statusConfig = {
     new: {
       label: 'Novo',
-      className:
-        'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-      iconColor: 'text-green-500',
+      className: 'bg-terracota/15 text-terracota',
+      iconColor: 'text-terracota',
     },
     read: {
       label: 'Lido',
-      className:
-        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-      iconColor: 'text-yellow-500',
+      className: 'bg-areia/60 text-azulPetroleo',
+      iconColor: 'text-azulPetroleo',
     },
     replied: {
       label: 'Respondido',
-      className:
-        'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-      iconColor: 'text-blue-500',
+      className: 'bg-verdeOlivaClaro/30 text-verdeOliva',
+      iconColor: 'text-verdeOliva',
     },
   }
 

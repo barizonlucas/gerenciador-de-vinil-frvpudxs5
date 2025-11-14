@@ -115,6 +115,25 @@ Este template inclui uma biblioteca completa de componentes Shadcn UI baseados e
 - Tooltip
 - E muito mais...
 
+## 🌈 Identidade Visual
+
+A paleta segue o conceito de brasilidade leve descrito no “Plano de Mudança de Cores”. Os principais tokens disponíveis no Tailwind (`bg-areia`, `text-terracota`, etc.) correspondem às cores abaixo:
+
+| Token | Hex | Uso principal |
+| --- | --- | --- |
+| `areia` | `#E6D9C3` | Fundo claro / textos em modo escuro |
+| `azulPetroleo` | `#314A52` | Header, tipografia no modo claro |
+| `terracota` | `#C17556` | Botões primários, ring states |
+| `verdeOlivaClaro` | `#A3B9A1` | Botões secundários, chips |
+| `verdeOliva` | `#708D81` | Ícones, badges |
+| `brancoQuente` | `#FAF8F4` | Cards no modo claro, textos em botões |
+| `azulPetroleoMedio` | `#232C33` | Cards no modo escuro |
+| `azulPetroleoEscuro` | `#181F25` | Fundo principal no modo escuro |
+| `terracotaEscuro` | `#A14E2E` | Estados de erro/alerta |
+| `amareloQueimado` | `#E2B86A` | Alertas e destaques informativos |
+
+Todos os componentes Shadcn usam `var(--primary)`, `var(--background)` e derivados, então basta alterar os valores em `src/main.css` para evoluções futuras.
+
 ## 🧪 Testes
 
 O projeto usa Vitest e Testing Library para testes:

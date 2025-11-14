@@ -99,7 +99,7 @@ export const PollWidget = () => {
             </span>
           )}
           {hasMessageAlert && (
-            <span className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full border-2 border-background bg-[#E02424]" />
+            <span className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full border-2 border-background bg-terracotaEscuro" />
           )}
         </Button>
       </div>

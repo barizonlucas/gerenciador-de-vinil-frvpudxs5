@@ -41,6 +41,10 @@ export default {
         success: {
           DEFAULT: 'hsl(var(--success))',
         },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -57,11 +61,30 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        areia: 'hsl(var(--color-areia))',
+        areiaEscuro: 'hsl(var(--color-areia-escuro))',
+        brancoQuente: 'hsl(var(--color-branco-quente))',
+        azulPetroleo: 'hsl(var(--color-azul-petroleo))',
+        azulPetroleoEscuro: 'hsl(var(--color-azul-petroleo-escuro))',
+        azulPetroleoMedio: 'hsl(var(--color-azul-petroleo-medio))',
+        cinzaAmarelado: 'hsl(var(--color-cinza-amarelado))',
+        cinzaAreia: 'hsl(var(--color-cinza-areia))',
+        terracota: 'hsl(var(--color-terracota))',
+        terracotaHover: 'hsl(var(--color-terracota-hover))',
+        terracotaEscuro: 'hsl(var(--color-terracota-escuro))',
+        verdeOliva: 'hsl(var(--color-verde-oliva))',
+        verdeOlivaClaro: 'hsl(var(--color-verde-oliva-claro))',
+        verdeOlivaHover: 'hsl(var(--color-verde-oliva-hover))',
+        verdeOlivaMedio: 'hsl(var(--color-verde-oliva-medio))',
+        amareloQueimado: 'hsl(var(--color-amarelo-queimado))',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        brand: 'var(--shadow-brand)',
       },
       keyframes: {
         'accordion-down': {

@@ -4,50 +4,77 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 76% 36%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --color-areia: 38 41% 83%;
+    --color-areia-escuro: 41 30% 73%;
+    --color-branco-quente: 40 38% 97%;
+    --color-azul-petroleo: 195 25% 26%;
+    --color-azul-petroleo-escuro: 208 21% 12%;
+    --color-azul-petroleo-medio: 206 19% 17%;
+    --color-cinza-amarelado: 39 9% 44%;
+    --color-cinza-areia: 40 11% 67%;
+    --color-terracota: 17 46% 55%;
+    --color-terracota-hover: 16 44% 51%;
+    --color-terracota-escuro: 17 56% 41%;
+    --color-verde-oliva-claro: 115 15% 68%;
+    --color-verde-oliva-hover: 111 14% 61%;
+    --color-verde-oliva: 155 11% 50%;
+    --color-verde-oliva-medio: 133 18% 61%;
+    --color-amarelo-queimado: 39 67% 65%;
+
+    --background: var(--color-areia);
+    --foreground: var(--color-azul-petroleo);
+    --card: var(--color-branco-quente);
+    --card-foreground: var(--color-azul-petroleo);
+    --popover: var(--color-branco-quente);
+    --popover-foreground: var(--color-azul-petroleo);
+    --primary: var(--color-terracota);
+    --primary-hover: var(--color-terracota-hover);
+    --primary-foreground: var(--color-branco-quente);
+    --secondary: var(--color-verde-oliva-claro);
+    --secondary-hover: var(--color-verde-oliva-hover);
+    --secondary-foreground: var(--color-azul-petroleo);
+    --muted: var(--color-branco-quente);
+    --muted-foreground: var(--color-cinza-amarelado);
+    --accent: var(--color-verde-oliva);
+    --accent-foreground: var(--color-branco-quente);
+    --destructive: var(--color-terracota-escuro);
+    --destructive-foreground: var(--color-branco-quente);
+    --success: var(--color-verde-oliva-medio);
+    --warning: var(--color-amarelo-queimado);
+    --warning-foreground: var(--color-azul-petroleo);
+    --border: var(--color-areia-escuro);
+    --input: var(--color-areia-escuro);
+    --ring: var(--color-terracota);
     --radius: 0.5rem;
+    --shadow-brand: 0px 4px 8px rgba(49, 74, 82, 0.1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 71% 45%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: var(--color-azul-petroleo-escuro);
+    --foreground: var(--color-areia);
+    --card: var(--color-azul-petroleo-medio);
+    --card-foreground: var(--color-areia);
+    --popover: var(--color-azul-petroleo-medio);
+    --popover-foreground: var(--color-areia);
+    --primary: var(--color-terracota);
+    --primary-hover: var(--color-terracota-hover);
+    --primary-foreground: var(--color-areia);
+    --secondary: var(--color-verde-oliva-claro);
+    --secondary-hover: var(--color-verde-oliva-hover);
+    --secondary-foreground: var(--color-azul-petroleo);
+    --muted: var(--color-azul-petroleo);
+    --muted-foreground: var(--color-cinza-areia);
+    --accent: var(--color-verde-oliva);
+    --accent-foreground: var(--color-areia);
+    --destructive: var(--color-terracota-escuro);
+    --destructive-foreground: var(--color-areia);
+    --success: var(--color-verde-oliva-medio);
+    --warning: var(--color-amarelo-queimado);
+    --warning-foreground: var(--color-azul-petroleo);
+    --border: var(--color-azul-petroleo);
+    --input: var(--color-azul-petroleo);
+    --ring: var(--color-terracota);
+    --shadow-brand: 0px 4px 8px rgba(12, 16, 20, 0.45);
   }
 }
 
@@ -55,7 +82,11 @@
   * {
     @apply border-border;
   }
+  html {
+    background-color: hsl(var(--background));
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-color: hsl(var(--background));
   }
 }
