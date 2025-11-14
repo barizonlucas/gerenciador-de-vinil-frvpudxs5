@@ -329,7 +329,19 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_admin_conversation_summaries: {
+        Args: never
+        Returns: Database['public']['CompositeTypes']['admin_conversation_summary'][]
+        SetofOptions: {
+          from: '*'
+          to: 'admin_conversation_summary'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_admin_user_thread: { Args: { p_user_id: string }; Returns: Json }
       get_message_thread: { Args: { p_message_id: string }; Returns: Json }
+      get_user_message_threads: { Args: never; Returns: Json }
       get_quick_metrics_avg_first_reply_time: {
         Args: never
         Returns: {
@@ -380,6 +392,17 @@ export type Database = {
       [_ in never]: never
     }
     CompositeTypes: {
+      admin_conversation_summary: {
+        user_id: string | null
+        user_email: string | null
+        user_display_name: string | null
+        user_avatar_url: string | null
+        latest_message_id: string | null
+        latest_message: string | null
+        latest_status: string | null
+        latest_created_at: string | null
+        total_messages: number | null
+      }
       admin_message_view: {
         id: string | null
         user_id: string | null

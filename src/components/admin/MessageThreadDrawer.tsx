@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -27,9 +27,13 @@ import {
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
 import { MessageStatusBadge } from './MessageStatusBadge'
-import { UserMessage, MessageThread, MessageStatus } from '@/types/messages'
 import {
-  getMessageThread,
+  AdminConversation,
+  AdminConversationSummary,
+  MessageStatus,
+} from '@/types/messages'
+import {
+  getAdminConversation,
   replyToMessage,
   updateMessageStatus,
 } from '@/services/messages'
@@ -38,6 +42,7 @@ import { toast } from 'sonner'
 import { Loader2, Send, User as UserIcon } from 'lucide-react'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { supabase } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
 const replySchema = z.object({
   reply: z
@@ -47,21 +52,33 @@ const replySchema = z.object({
 })
 type ReplyFormValues = z.infer<typeof replySchema>
 
+type ChatEntry = {
+  id: string
+  type: 'user' | 'admin'
+  content: string
+  created_at: string
+  displayName: string
+  avatarUrl: string | null
+}
+
 interface MessageThreadDrawerProps {
   isOpen: boolean
   onClose: () => void
-  message: UserMessage | null
-  onUpdate: (updatedMessage: UserMessage) => void
+  conversation: AdminConversationSummary | null
+  onConversationChange: (
+    userId: string,
+    updates: Partial<AdminConversationSummary>,
+  ) => void
 }
 
 export const MessageThreadDrawer = ({
   isOpen,
   onClose,
-  message,
-  onUpdate,
+  conversation,
+  onConversationChange,
 }: MessageThreadDrawerProps) => {
   const isOnline = useOnlineStatus()
-  const [thread, setThread] = useState<MessageThread | null>(null)
+  const [thread, setThread] = useState<AdminConversation | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,27 +95,80 @@ export const MessageThreadDrawer = ({
   const replyValue = watch('reply')
   const charCount = replyValue?.length || 0
 
-  const isUuid = (s: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
+  const chatEntries = useMemo<ChatEntry[]>(() => {
+    if (!thread) return []
+    return thread.messages
+      .flatMap((entry) => {
+        const userEntry: ChatEntry = {
+          id: entry.message.id,
+          type: 'user',
+          content: entry.message.message,
+          created_at: entry.message.created_at,
+          displayName:
+            entry.message.user_display_name ||
+            entry.message.user_email ||
+            'Colecionador',
+          avatarUrl: entry.message.user_avatar_url || null,
+        }
+
+        const replies = entry.replies.map((reply) => ({
+          id: reply.id,
+          type: 'admin' as const,
+          content: reply.reply,
+          created_at: reply.created_at,
+          displayName: reply.profiles?.display_name || 'Equipe Teko',
+          avatarUrl: reply.profiles?.avatar_url || null,
+        }))
+
+        return [userEntry, ...replies]
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+  }, [thread])
 
   const fetchThread = useCallback(async () => {
-    if (!message) return
+    if (!conversation) return
     setLoading(true)
     setError(null)
     try {
-      if (!isUuid(message.id)) {
-      console.error('Message com id inválido:', message)   // 🔎 vai te mostrar se id==texto
-      throw new Error('ID de mensagem inválido')
-    }
-      logEvent('admin_message_opened', { message_id: message.id }, 'admin')
-      const data = await getMessageThread(message.id)
+      logEvent(
+        'admin_message_opened',
+        { user_id: conversation.user_id },
+        'admin',
+      )
+      const data = await getAdminConversation(conversation.user_id)
       setThread(data)
-      if (data.message.status === 'new') {
-        const updated = await updateMessageStatus(message.id, 'read')
-        onUpdate(updated)
+      if (conversation.latest_status === 'new') {
+        const updated = await updateMessageStatus(
+          conversation.latest_message_id,
+          'read',
+        )
+        onConversationChange(conversation.user_id, {
+          latest_status: 'read',
+          latest_message: updated.message,
+          latest_created_at: updated.created_at,
+        })
+        setThread((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: prev.messages.map((entry) =>
+                  entry.message.id === updated.id
+                    ? { ...entry, message: updated }
+                    : entry,
+                ),
+              }
+            : prev,
+        )
         logEvent(
           'admin_message_status_changed',
-          { message_id: message.id, from: 'new', to: 'read' },
+          {
+            message_id: conversation.latest_message_id,
+            from: 'new',
+            to: 'read',
+          },
           'admin',
         )
         toast.info('🟡 Mensagem marcada como lida.')
@@ -108,21 +178,24 @@ export const MessageThreadDrawer = ({
     } finally {
       setLoading(false)
     }
-  }, [message, onUpdate])
+  }, [conversation, onConversationChange])
 
   useEffect(() => {
-    if (isOpen && message) {
+    if (isOpen && conversation) {
       fetchThread()
     } else {
       setThread(null)
       reset()
     }
-  }, [isOpen, message, fetchThread, reset])
+  }, [isOpen, conversation, fetchThread, reset])
 
   const onSubmit = async (data: ReplyFormValues) => {
-    if (!thread) return
+    if (!thread || !conversation) return
     try {
-      const newReply = await replyToMessage(thread.message.id, data.reply)
+      const newReply = await replyToMessage(
+        conversation.latest_message_id,
+        data.reply,
+      )
       const { data: profileData } = await supabase
         .from('profiles')
         .select('display_name, avatar_url')
@@ -133,15 +206,27 @@ export const MessageThreadDrawer = ({
         prev
           ? {
               ...prev,
-              message: { ...prev.message, status: 'replied' },
-              replies: [...prev.replies, fullReply],
+              messages: prev.messages.map((entry) =>
+                entry.message.id === conversation.latest_message_id
+                  ? {
+                      ...entry,
+                      message: { ...entry.message, status: 'replied' },
+                      replies: [...entry.replies, fullReply],
+                    }
+                  : entry,
+              ),
             }
           : null,
       )
-      onUpdate({ ...thread.message, status: 'replied' })
+      onConversationChange(conversation.user_id, {
+        latest_status: 'replied',
+      })
       logEvent(
         'admin_message_replied',
-        { message_id: thread.message.id, reply_length: data.reply.length },
+        {
+          message_id: conversation.latest_message_id,
+          reply_length: data.reply.length,
+        },
         'admin',
       )
       toast.success('✅ Resposta enviada com sucesso.')
@@ -152,18 +237,40 @@ export const MessageThreadDrawer = ({
   }
 
   const handleMarkAsRead = async () => {
-    if (!thread || thread.message.status === 'read') return
+    if (
+      !thread ||
+      !conversation ||
+      conversation.latest_status === 'read' ||
+      conversation.latest_status === 'replied'
+    )
+      return
     try {
-      const updated = await updateMessageStatus(thread.message.id, 'read')
-      setThread((prev) =>
-        prev ? { ...prev, message: { ...prev.message, status: 'read' } } : null,
+      const updated = await updateMessageStatus(
+        conversation.latest_message_id,
+        'read',
       )
-      onUpdate(updated)
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: prev.messages.map((entry) =>
+                entry.message.id === updated.id
+                  ? { ...entry, message: { ...entry.message, status: 'read' } }
+                  : entry,
+              ),
+            }
+          : null,
+      )
+      onConversationChange(conversation.user_id, {
+        latest_status: 'read',
+        latest_message: updated.message,
+        latest_created_at: updated.created_at,
+      })
       logEvent(
         'admin_message_status_changed',
         {
-          message_id: thread.message.id,
-          from: thread.message.status,
+          message_id: conversation.latest_message_id,
+          from: conversation.latest_status,
           to: 'read',
         },
         'admin',
@@ -183,8 +290,10 @@ export const MessageThreadDrawer = ({
               <Skeleton className="h-7 w-3/4" />
             ) : (
               <DrawerTitle className="truncate">
-                {thread?.message.user_display_name ||
-                  thread?.message.user_email ||
+                {thread?.user?.display_name ||
+                  thread?.user?.email ||
+                  conversation?.user_display_name ||
+                  conversation?.user_email ||
                   'Usuário desconhecido'}
               </DrawerTitle>
             )}
@@ -192,15 +301,17 @@ export const MessageThreadDrawer = ({
               <Skeleton className="h-4 w-1/2" />
             ) : (
               <DrawerDescription className="flex items-center gap-2">
-                {thread && (
+                {conversation && (
                   <>
-                    <MessageStatusBadge status={thread.message.status} />
-                    <span>
-                      {format(
-                        new Date(thread.message.created_at),
-                        "dd/MM/yyyy 'às' HH:mm",
-                      )}
-                    </span>
+                    <MessageStatusBadge status={conversation.latest_status} />
+                    {conversation.latest_created_at && (
+                      <span>
+                        {format(
+                          new Date(conversation.latest_created_at),
+                          "dd/MM/yyyy 'às' HH:mm",
+                        )}
+                      </span>
+                    )}
                   </>
                 )}
               </DrawerDescription>
@@ -213,11 +324,14 @@ export const MessageThreadDrawer = ({
             ) : error ? (
               <div className="text-center py-10 text-destructive">{error}</div>
             ) : (
-              thread && (
+              chatEntries.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  Nenhuma mensagem encontrada para este usuário.
+                </div>
+              ) : (
                 <div className="space-y-6">
-                  <MessageBubble message={thread.message} isReply={false} />
-                  {thread.replies.map((reply) => (
-                    <MessageBubble key={reply.id} message={reply} isReply />
+                  {chatEntries.map((entry) => (
+                    <ChatBubble key={`${entry.type}-${entry.id}`} entry={entry} />
                   ))}
                 </div>
               )
@@ -253,8 +367,9 @@ export const MessageThreadDrawer = ({
                 />
                 <div className="flex justify-between items-center">
                   <div>
-                    {thread?.message.status !== 'read' &&
-                      thread?.message.status !== 'replied' && (
+                    {conversation &&
+                      conversation.latest_status !== 'read' &&
+                      conversation.latest_status !== 'replied' && (
                         <Button
                           type="button"
                           variant="ghost"
@@ -271,7 +386,12 @@ export const MessageThreadDrawer = ({
                     </DrawerClose>
                     <Button
                       type="submit"
-                      disabled={isSubmitting || !isValid || !isOnline}
+                      disabled={
+                        isSubmitting ||
+                        !isValid ||
+                        !isOnline ||
+                        !conversation?.latest_message_id
+                      }
                     >
                       {isSubmitting && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -290,44 +410,51 @@ export const MessageThreadDrawer = ({
   )
 }
 
-const MessageBubble = ({
-  message,
-  isReply,
-}: {
-  message: any
-  isReply: boolean
-}) => {
-  const displayName = isReply
-    ? message.profiles?.display_name || 'Admin'
-    : message.user_display_name || message.user_email
-  const avatarUrl = isReply
-    ? message.profiles?.avatar_url
-    : message.user_avatar_url
-  const content = isReply ? message.reply : message.message
-  const date = formatDistanceToNow(new Date(message.created_at), {
+const ChatBubble = ({ entry }: { entry: ChatEntry }) => {
+  const isAdmin = entry.type === 'admin'
+  const date = formatDistanceToNow(new Date(entry.created_at), {
     addSuffix: true,
     locale: ptBR,
   })
 
   return (
-    <div className="flex items-start gap-4">
+    <div
+      className={cn(
+        'flex items-start gap-4',
+        isAdmin && 'flex-row-reverse text-right',
+      )}
+    >
       <Avatar className="h-10 w-10">
-        <AvatarImage src={avatarUrl} />
+        <AvatarImage src={entry.avatarUrl ?? undefined} />
         <AvatarFallback>
-          {displayName ? (
-            displayName.charAt(0).toUpperCase()
+          {entry.displayName ? (
+            entry.displayName.charAt(0).toUpperCase()
           ) : (
             <UserIcon className="h-5 w-5" />
           )}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <p className="font-semibold">{displayName}</p>
-          <p className="text-xs text-muted-foreground">{date}</p>
+      <div className="max-w-[80%] space-y-1">
+        <div
+          className={cn(
+            'flex items-center gap-2 text-xs text-muted-foreground',
+            isAdmin && 'justify-end',
+          )}
+        >
+          <span className="font-semibold text-sm text-foreground">
+            {entry.displayName}
+          </span>
+          <span>{date}</span>
         </div>
-        <div className="mt-1 text-sm text-foreground whitespace-pre-wrap">
-          {content}
+        <div
+          className={cn(
+            'rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap break-words',
+            isAdmin
+              ? 'bg-primary text-primary-foreground ml-auto'
+              : 'bg-muted text-foreground',
+          )}
+        >
+          {entry.content}
         </div>
       </div>
     </div>

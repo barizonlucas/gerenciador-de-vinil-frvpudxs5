@@ -4,8 +4,11 @@ import {
   MessageReply,
   MessageThread,
   MessageStatus,
+  AdminConversationSummary,
+  AdminConversation,
 } from '@/types/messages'
-import type { AdminMessage } from '@/types/messages'
+
+export const LAST_REPLY_SEEN_KEY = 'teko-last-reply-seen'
 
 export const submitMessage = async (message: string): Promise<void> => {
   const {
@@ -23,22 +26,64 @@ export const submitMessage = async (message: string): Promise<void> => {
   }
 }
 
-export const getAdminMessages = async (): Promise<AdminMessage[]> => {
-  const { data, error } = await supabase.rpc('get_admin_messages')
+export const getAdminConversationSummaries =
+  async (): Promise<AdminConversationSummary[]> => {
+    const { data, error } = await supabase.rpc(
+      'get_admin_conversation_summaries',
+    )
+    if (error) {
+      console.error('Error fetching admin conversation summaries:', error)
+      throw error
+    }
+    return (data as AdminConversationSummary[]) ?? []
+  }
+
+export const getAdminConversation = async (
+  userId: string,
+): Promise<AdminConversation> => {
+  const { data, error } = await supabase.rpc('get_admin_user_thread', {
+    p_user_id: userId,
+  })
   if (error) {
-    console.error('Error fetching admin messages:', error)
+    console.error('Error fetching admin conversation:', error)
     throw error
   }
 
-  const rows = (data ?? []) as AdminMessage[]
-  return rows.map(r => ({
-    id: r.id,
-    message: r.message,
-    status: r.status,
-    created_at: r.created_at,
-    user_email: r.user_email,
-    user_display_name: r.user_display_name,
+  const payload = (data as any) || { user: null, messages: [] }
+  const messages = (payload.messages ?? []).map((entry: any) => ({
+    message: entry.message as UserMessage,
+    replies: (entry.replies ?? []).map(
+      (reply: any) =>
+        ({
+          id: reply.id,
+          message_id: reply.message_id,
+          admin_user_id: reply.admin_user_id,
+          reply: reply.reply,
+          created_at: reply.created_at,
+          updated_at: reply.updated_at,
+          profiles: {
+            display_name:
+              reply.admin_display_name ?? reply.profiles?.display_name ?? null,
+            avatar_url:
+              reply.admin_avatar_url ?? reply.profiles?.avatar_url ?? null,
+          },
+        }) satisfies MessageReply,
+    ),
   }))
+
+  return {
+    user: payload.user ?? null,
+    messages,
+  }
+}
+
+export const getUserMessageThreads = async (): Promise<MessageThread[]> => {
+  const { data, error } = await supabase.rpc('get_user_message_threads')
+  if (error) {
+    console.error('Error fetching user message threads:', error)
+    throw error
+  }
+  return (data as MessageThread[]) ?? []
 }
 
 export const getMessageThread = async (
@@ -119,4 +164,20 @@ export const replyToMessage = async (
   await updateMessageStatus(messageId, 'replied')
 
   return data as MessageReply
+}
+
+export const getLatestAdminReplyAt = async (): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('user_message_replies')
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching latest reply timestamp:', error)
+    throw error
+  }
+
+  return data?.created_at ?? null
 }

@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Vote } from 'lucide-react'
 import { usePoll } from '@/hooks/use-poll'
 import { PollDialog } from './PollDialog'
 import { logEvent } from '@/services/telemetry'
+import { useAuth } from '@/contexts/AuthContext'
+import {
+  getLatestAdminReplyAt,
+  LAST_REPLY_SEEN_KEY,
+} from '@/services/messages'
 
 export const PollWidget = () => {
   const {
@@ -16,6 +21,57 @@ export const PollWidget = () => {
     markAsInteracted,
   } = usePoll()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [hasMessageAlert, setHasMessageAlert] = useState(false)
+  const [latestReplyAt, setLatestReplyAt] = useState<string | null>(null)
+  const { user } = useAuth()
+
+  const checkReplyAlerts = useCallback(async () => {
+    if (!user) {
+      setHasMessageAlert(false)
+      setLatestReplyAt(null)
+      return
+    }
+    try {
+      if (typeof window === 'undefined') return
+      const latest = await getLatestAdminReplyAt()
+      setLatestReplyAt(latest)
+      if (!latest) {
+        setHasMessageAlert(false)
+        return
+      }
+      const lastSeen = localStorage.getItem(LAST_REPLY_SEEN_KEY)
+      if (!lastSeen || new Date(latest) > new Date(lastSeen)) {
+        setHasMessageAlert(true)
+      } else {
+        setHasMessageAlert(false)
+      }
+    } catch (error) {
+      console.error('Failed to check message replies:', error)
+    }
+  }, [user])
+
+  useEffect(() => {
+    checkReplyAlerts()
+  }, [checkReplyAlerts])
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      checkReplyAlerts()
+    }
+  }, [isDialogOpen, checkReplyAlerts])
+
+  const handleMessagesViewed = useCallback(
+    (timestamp?: string | null) => {
+      if (!user || typeof window === 'undefined') return
+      const value = timestamp ?? latestReplyAt ?? new Date().toISOString()
+      localStorage.setItem(LAST_REPLY_SEEN_KEY, value)
+      setHasMessageAlert(false)
+      if (timestamp) {
+        setLatestReplyAt(timestamp)
+      }
+    },
+    [user, latestReplyAt],
+  )
 
   const handleOpenDialog = () => {
     markAsInteracted()
@@ -42,6 +98,9 @@ export const PollWidget = () => {
               <span className="relative">!</span>
             </span>
           )}
+          {hasMessageAlert && (
+            <span className="absolute -bottom-1 -left-1 h-4 w-4 rounded-full border-2 border-background bg-[#E02424]" />
+          )}
         </Button>
       </div>
       <PollDialog
@@ -52,6 +111,7 @@ export const PollWidget = () => {
         error={error}
         onVote={handleVote}
         onRetry={fetchPoll}
+        onMessagesViewed={handleMessagesViewed}
       />
     </>
   )

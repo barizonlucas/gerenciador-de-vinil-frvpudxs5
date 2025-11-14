@@ -29,35 +29,39 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useOnlineStatus } from '@/hooks/use-online-status'
-import { getAdminMessages } from '@/services/messages'
+import { getAdminConversationSummaries } from '@/services/messages'
 import { logEvent } from '@/services/telemetry'
-import { UserMessage, MessageStatus } from '@/types/messages'
+import {
+  AdminConversationSummary,
+  MessageStatus,
+} from '@/types/messages'
 import { MessageStatusBadge } from '@/components/admin/MessageStatusBadge'
 import { MessageThreadDrawer } from '@/components/admin/MessageThreadDrawer'
 
 const AdminMessagesPage = () => {
   const isOnline = useOnlineStatus()
-  const [messages, setMessages] = useState<AdminMessage[]>([])
+  const [conversations, setConversations] = useState<
+    AdminConversationSummary[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<MessageStatus | 'all'>('all')
-  const [selectedMessage, setSelectedMessage] = useState<UserMessage | null>(
-    null,
-  )
+  const [selectedConversation, setSelectedConversation] =
+    useState<AdminConversationSummary | null>(null)
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
   const fetchMessages = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await getAdminMessages()
-      setMessages(data)
+      const data = await getAdminConversationSummaries()
+      setConversations(data)
       logEvent(
         'admin_inbox_viewed',
         {
-          total_messages: data.length,
-          unread_count: data.filter((m) => m.status === 'new').length,
+          total_conversations: data.length,
+          unread_count: data.filter((c) => c.latest_status === 'new').length,
         },
         'admin',
       )
@@ -74,22 +78,27 @@ const AdminMessagesPage = () => {
     }
   }, [isOnline, fetchMessages])
 
-  const filteredMessages = useMemo(() => {
-    return messages
-      .filter((message) => {
+  const filteredConversations = useMemo(() => {
+    return conversations
+      .filter((conversation) => {
         if (statusFilter === 'all') return true
-        return message.status === statusFilter
+        return conversation.latest_status === statusFilter
       })
-      .filter((message) => {
+      .filter((conversation) => {
         const search = debouncedSearchTerm.toLowerCase()
         if (!search) return true
+        const latestMessage =
+          conversation.latest_message?.toLowerCase() ?? ''
+        const email = conversation.user_email?.toLowerCase() ?? ''
+        const displayName =
+          conversation.user_display_name?.toLowerCase() ?? ''
         return (
-          message.message.toLowerCase().includes(search) ||
-          message.user_email?.toLowerCase().includes(search) ||
-          message.user_display_name?.toLowerCase().includes(search)
+          latestMessage.includes(search) ||
+          email.includes(search) ||
+          displayName.includes(search)
         )
       })
-  }, [messages, statusFilter, debouncedSearchTerm])
+  }, [conversations, statusFilter, debouncedSearchTerm])
 
   const handleStatusFilterChange = (value: string) => {
     const newStatus = value as MessageStatus | 'all'
@@ -111,11 +120,28 @@ const AdminMessagesPage = () => {
     }
   }, [debouncedSearchTerm])
 
-  const handleUpdateMessage = (updatedMessage: UserMessage) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m)),
+  const handleConversationChange = (
+    userId: string,
+    updates: Partial<AdminConversationSummary>,
+  ) => {
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.user_id === userId
+          ? { ...conversation, ...updates }
+          : conversation,
+      ),
     )
   }
+
+  useEffect(() => {
+    if (!selectedConversation) return
+    const updated = conversations.find(
+      (c) => c.user_id === selectedConversation.user_id,
+    )
+    if (updated && updated !== selectedConversation) {
+      setSelectedConversation(updated)
+    }
+  }, [conversations, selectedConversation])
 
   const renderContent = () => {
     if (!isOnline) {
@@ -140,12 +166,12 @@ const AdminMessagesPage = () => {
         </div>
       )
     }
-    if (filteredMessages.length === 0) {
+    if (filteredConversations.length === 0) {
       return (
         <div className="text-center py-10">
           <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
           <p className="mt-4 text-muted-foreground">
-            {messages.length > 0
+            {conversations.length > 0
               ? 'Nenhuma mensagem corresponde aos filtros.'
               : 'Nenhum feedback por enquanto. Quando alguém enviar, aparecerá aqui.'}
           </p>
@@ -163,25 +189,31 @@ const AdminMessagesPage = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredMessages.map((message) => (
+          {filteredConversations.map((conversation) => (
             <TableRow
-              key={message.id}
-              onClick={() => setSelectedMessage(message)}
+              key={conversation.user_id}
+              onClick={() => setSelectedConversation(conversation)}
               className="cursor-pointer"
             >
               <TableCell className="font-medium">
-                {message.user_display_name || message.user_email}
+                {conversation.user_display_name || conversation.user_email}
               </TableCell>
               <TableCell className="max-w-sm truncate">
-                {message.message}
+                {conversation.latest_message || '—'}
               </TableCell>
               <TableCell>
-                <MessageStatusBadge status={message.status} />
+                <MessageStatusBadge status={conversation.latest_status} />
               </TableCell>
               <TableCell className="text-right">
-                {format(new Date(message.created_at), 'dd/MM/yyyy HH:mm', {
-                  locale: ptBR,
-                })}
+                {conversation.latest_created_at
+                  ? format(
+                      new Date(conversation.latest_created_at),
+                      'dd/MM/yyyy HH:mm',
+                      {
+                        locale: ptBR,
+                      },
+                    )
+                  : '—'}
               </TableCell>
             </TableRow>
           ))}
@@ -243,10 +275,10 @@ const AdminMessagesPage = () => {
         </Card>
       </div>
       <MessageThreadDrawer
-        isOpen={!!selectedMessage}
-        onClose={() => setSelectedMessage(null)}
-        message={selectedMessage}
-        onUpdate={handleUpdateMessage}
+        isOpen={!!selectedConversation}
+        onClose={() => setSelectedConversation(null)}
+        conversation={selectedConversation}
+        onConversationChange={handleConversationChange}
       />
     </>
   )

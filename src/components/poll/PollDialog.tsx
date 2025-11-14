@@ -32,6 +32,7 @@ interface PollDialogProps {
   error: string | null
   onVote: (optionId: string) => Promise<void>
   onRetry: () => void
+  onMessagesViewed?: (latestReplyAt?: string | null) => void
 }
 
 export const PollDialog = ({
@@ -42,6 +43,7 @@ export const PollDialog = ({
   error,
   onVote,
   onRetry,
+  onMessagesViewed,
 }: PollDialogProps) => {
   const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(
     undefined,
@@ -63,6 +65,7 @@ export const PollDialog = ({
   const handleTabChange = (value: string) => {
     if (value === 'message') {
       logEvent('message_opened', { poll_id: pollData?.id })
+      onMessagesViewed?.()
     }
   }
 
@@ -191,7 +194,10 @@ export const PollDialog = ({
                 Ideias, dúvidas ou feedback — queremos ouvir você.
               </DialogDescription>
             </DialogHeader>
-            <MessageForm onCancel={onClose} />
+            <MessageForm
+              onCancel={onClose}
+              onRepliesViewed={onMessagesViewed}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
