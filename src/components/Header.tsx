@@ -66,7 +66,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-azulPetroleo text-areia shadow-brand">
-      <div className="container flex h-16 items-center justify-between gap-4">
+      <div className="container flex h-auto flex-col gap-3 px-4 py-3 md:h-16 md:flex-row md:items-center md:justify-between md:gap-4 md:px-0 md:py-0">
         <Link to="/" className="mr-6 flex items-center gap-2 text-areia">
           <DiscAlbum className="h-6 w-6" />
           <span className="font-bold tracking-wide">Teko</span>
@@ -87,8 +87,8 @@ export const Header = () => {
             </NavLink>
           )}
         </nav>
-        <div className="flex flex-1 items-center justify-end gap-2 text-areia">
-          <Button onClick={openAddModal}>
+        <div className="flex w-full items-center justify-end gap-2 overflow-x-auto pb-1 text-areia md:flex-1 md:justify-end md:overflow-visible md:pb-0">
+          <Button onClick={openAddModal} size="sm" className="min-w-[170px]">
             <Plus className="mr-2 h-4 w-4" /> Adicionar Novo Disco
           </Button>
           <Tooltip>

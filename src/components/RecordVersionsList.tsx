@@ -141,36 +141,39 @@ export const RecordVersionsList = ({
             key={`${version.id}-${index}`}
             ref={index === sortedVersions.length - 1 ? lastElementRef : null}
             className={cn(
-              'flex items-center gap-4 p-2 rounded-lg hover:bg-accent',
+              'flex flex-col gap-3 rounded-lg p-3 hover:bg-accent md:flex-row md:items-center md:p-2',
               isCurrent && 'bg-accent border',
             )}
           >
-            <Avatar className="h-16 w-16 rounded-md">
-              <AvatarImage src={version.thumb} alt={version.title} />
-              <AvatarFallback className="rounded-md">?</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 text-sm space-y-1">
-              <p className="font-semibold">{version.title}</p>
-              <p className="text-muted-foreground">
-                {version.label} ({version.catno}) • {version.country} •{' '}
-                {version.year}
-              </p>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" /> {version.community?.have ?? 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="h-3 w-3" /> {version.community?.want ?? 0}
-                </span>
+            <div className="flex w-full items-start gap-4 md:flex-1">
+              <Avatar className="h-16 w-16 shrink-0 rounded-md">
+                <AvatarImage src={version.thumb} alt={version.title} />
+                <AvatarFallback className="rounded-md">?</AvatarFallback>
+              </Avatar>
+              <div className="space-y-1 text-sm">
+                <p className="font-semibold">{version.title}</p>
+                <p className="text-muted-foreground">
+                  {version.label} ({version.catno}) • {version.country} •{' '}
+                  {version.year}
+                </p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3" /> {version.community?.have ?? 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-3 w-3" /> {version.community?.want ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex w-full flex-col items-stretch gap-2 md:w-auto md:items-end">
               {isCurrent && <Badge variant="secondary">Sua versão atual</Badge>}
               <Button
                 size="sm"
                 onClick={() => handleSelectVersion(version)}
                 disabled={isSavingThis || isCurrent}
                 variant={isCurrent ? 'outline' : 'default'}
+                className="w-full md:w-auto"
               >
                 {isSavingThis && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
