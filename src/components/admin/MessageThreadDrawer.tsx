@@ -323,18 +323,16 @@ export const MessageThreadDrawer = ({
               <ThreadSkeleton />
             ) : error ? (
               <div className="text-center py-10 text-destructive">{error}</div>
+            ) : chatEntries.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                Nenhuma mensagem encontrada para este usuário.
+              </div>
             ) : (
-              chatEntries.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  Nenhuma mensagem encontrada para este usuário.
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {chatEntries.map((entry) => (
-                    <ChatBubble key={`${entry.type}-${entry.id}`} entry={entry} />
-                  ))}
-                </div>
-              )
+              <div className="space-y-6">
+                {chatEntries.map((entry) => (
+                  <ChatBubble key={`${entry.type}-${entry.id}`} entry={entry} />
+                ))}
+              </div>
             )}
           </ScrollArea>
           <DrawerFooter className="pt-4 border-t">

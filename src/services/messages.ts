@@ -26,17 +26,16 @@ export const submitMessage = async (message: string): Promise<void> => {
   }
 }
 
-export const getAdminConversationSummaries =
-  async (): Promise<AdminConversationSummary[]> => {
-    const { data, error } = await supabase.rpc(
-      'get_admin_conversation_summaries',
-    )
-    if (error) {
-      console.error('Error fetching admin conversation summaries:', error)
-      throw error
-    }
-    return (data as AdminConversationSummary[]) ?? []
+export const getAdminConversationSummaries = async (): Promise<
+  AdminConversationSummary[]
+> => {
+  const { data, error } = await supabase.rpc('get_admin_conversation_summaries')
+  if (error) {
+    console.error('Error fetching admin conversation summaries:', error)
+    throw error
   }
+  return (data as AdminConversationSummary[]) ?? []
+}
 
 export const getAdminConversation = async (
   userId: string,

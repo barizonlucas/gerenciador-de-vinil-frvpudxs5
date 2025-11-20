@@ -5,10 +5,7 @@ import { usePoll } from '@/hooks/use-poll'
 import { PollDialog } from './PollDialog'
 import { logEvent } from '@/services/telemetry'
 import { useAuth } from '@/contexts/AuthContext'
-import {
-  getLatestAdminReplyAt,
-  LAST_REPLY_SEEN_KEY,
-} from '@/services/messages'
+import { getLatestAdminReplyAt, LAST_REPLY_SEEN_KEY } from '@/services/messages'
 
 export const PollWidget = () => {
   const {

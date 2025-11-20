@@ -31,10 +31,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { getAdminConversationSummaries } from '@/services/messages'
 import { logEvent } from '@/services/telemetry'
-import {
-  AdminConversationSummary,
-  MessageStatus,
-} from '@/types/messages'
+import { AdminConversationSummary, MessageStatus } from '@/types/messages'
 import { MessageStatusBadge } from '@/components/admin/MessageStatusBadge'
 import { MessageThreadDrawer } from '@/components/admin/MessageThreadDrawer'
 
@@ -87,11 +84,9 @@ const AdminMessagesPage = () => {
       .filter((conversation) => {
         const search = debouncedSearchTerm.toLowerCase()
         if (!search) return true
-        const latestMessage =
-          conversation.latest_message?.toLowerCase() ?? ''
+        const latestMessage = conversation.latest_message?.toLowerCase() ?? ''
         const email = conversation.user_email?.toLowerCase() ?? ''
-        const displayName =
-          conversation.user_display_name?.toLowerCase() ?? ''
+        const displayName = conversation.user_display_name?.toLowerCase() ?? ''
         return (
           latestMessage.includes(search) ||
           email.includes(search) ||

@@ -227,9 +227,7 @@ export const MessageForm = ({
                       key={`${entry.type}-${entry.id}`}
                       className={cn(
                         'flex',
-                        entry.type === 'user'
-                          ? 'justify-end'
-                          : 'justify-start',
+                        entry.type === 'user' ? 'justify-end' : 'justify-start',
                       )}
                     >
                       <div
@@ -246,9 +244,7 @@ export const MessageForm = ({
                         <span
                           className={cn(
                             'mt-1 block text-xs opacity-70',
-                            entry.type === 'user'
-                              ? 'text-right'
-                              : 'text-left',
+                            entry.type === 'user' ? 'text-right' : 'text-left',
                           )}
                         >
                           {entry.senderName} •{' '}
