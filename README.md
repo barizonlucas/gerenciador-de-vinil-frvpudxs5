@@ -26,6 +26,12 @@ Este projeto foi criado de com apoio do [Skip](https://goskip.dev)
 npm install
 ```
 
+## 🔑 Configuração do reCAPTCHA v3
+
+- Front-end: defina `VITE_RECAPTCHA_SITE_KEY` no `.env.local` (já existe no template).
+- Edge Functions do Supabase: configure o secret `RECAPTCHA_SECRET_KEY` com a chave secreta do reCAPTCHA (ex.: `supabase secrets set --project-ref <ref> RECAPTCHA_SECRET_KEY=...`).
+- O score mínimo default é 0.4; ajuste enviando `threshold` no body da função ou alterando em `supabase/functions/verify-recaptcha/index.ts`.
+
 ## 💻 Scripts Disponíveis
 
 ### Desenvolvimento
