@@ -16,7 +16,13 @@ export const GoogleTagManager = () => {
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','${GTM_ID}');`
-      document.head.appendChild(script)
+
+      // Insert as high as possible in the head
+      if (document.head.firstChild) {
+        document.head.insertBefore(script, document.head.firstChild)
+      } else {
+        document.head.appendChild(script)
+      }
     }
 
     // GTM Noscript Injection
@@ -31,8 +37,13 @@ export const GoogleTagManager = () => {
       iframe.style.display = 'none'
       iframe.style.visibility = 'hidden'
       noscript.appendChild(iframe)
+
       // Insert immediately after opening body tag
-      document.body.insertBefore(noscript, document.body.firstChild)
+      if (document.body.firstChild) {
+        document.body.insertBefore(noscript, document.body.firstChild)
+      } else {
+        document.body.appendChild(noscript)
+      }
     }
   }, [])
 
