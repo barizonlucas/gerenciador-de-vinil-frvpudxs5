@@ -84,17 +84,17 @@ export const ViewRecordModal = ({
           <DialogDescription>{record.artist}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue={defaultTab || 'details'} className="w-full">
+        <Tabs defaultValue={defaultTab || 'history'} className="w-full">
           <TabsList
             className={`grid w-full ${
               record.master_id ? 'grid-cols-3' : 'grid-cols-2'
             }`}
           >
-            <TabsTrigger value="details">Detalhes</TabsTrigger>
-            <TabsTrigger value="history">História</TabsTrigger>
+            <TabsTrigger value="history">Sobre</TabsTrigger>
             {record.master_id && (
               <TabsTrigger value="versions">Minha Versão</TabsTrigger>
             )}
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
           </TabsList>
           <TabsContent value="details">
             <div className="grid grid-cols-3 gap-6 py-4">
