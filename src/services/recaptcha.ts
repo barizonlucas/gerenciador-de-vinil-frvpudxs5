@@ -11,12 +11,13 @@ export const verifyRecaptcha = async (
   action: string,
   threshold = 0.4,
 ) => {
-  const { data, error } = await supabase.functions.invoke<VerifyRecaptchaResponse>(
-    'verify-recaptcha',
-    {
-      body: { token, action, threshold },
-    },
-  )
+  const { data, error } =
+    await supabase.functions.invoke<VerifyRecaptchaResponse>(
+      'verify-recaptcha',
+      {
+        body: { token, action, threshold },
+      },
+    )
 
   if (error) {
     throw new Error(error.message || 'Falha na validação do reCAPTCHA.')

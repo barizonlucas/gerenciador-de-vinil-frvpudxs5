@@ -35,13 +35,10 @@ Deno.serve(async (req) => {
   try {
     body = (await req.json()) as VerifyRequestBody
   } catch (_err) {
-    return new Response(
-      JSON.stringify({ error: 'Requisição inválida.' }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return new Response(JSON.stringify({ error: 'Requisição inválida.' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   const token = body?.token
@@ -49,13 +46,10 @@ Deno.serve(async (req) => {
   const threshold = body?.threshold ?? DEFAULT_THRESHOLD
 
   if (!token) {
-    return new Response(
-      JSON.stringify({ error: 'Token reCAPTCHA ausente.' }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return new Response(JSON.stringify({ error: 'Token reCAPTCHA ausente.' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   const secret = Deno.env.get('RECAPTCHA_SECRET_KEY')
