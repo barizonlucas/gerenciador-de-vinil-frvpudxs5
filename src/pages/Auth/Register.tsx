@@ -23,8 +23,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { DiscAlbum } from 'lucide-react'
-import { useRecaptcha } from '@/hooks/useRecaptcha'
-import { verifyRecaptcha } from '@/services/recaptcha'
 
 const registerSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -35,7 +33,6 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
-  const { executeRecaptcha, isReady } = useRecaptcha()
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -44,35 +41,21 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setLoading(true)
-    try {
-      const token = await executeRecaptcha('register')
-      await verifyRecaptcha(token, 'register')
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    })
 
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      })
-
-      if (error) {
-        toast.error(error.message || 'Falha no registro.')
-      } else {
-        toast.success(
-          'Registro realizado! Verifique seu email para confirmação.',
-        )
-        form.reset()
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Falha ao validar o reCAPTCHA. Tente novamente.'
-      toast.error(message)
-    } finally {
-      setLoading(false)
+    if (error) {
+      toast.error(error.message || 'Falha no registro.')
+    } else {
+      toast.success('Registro realizado! Verifique seu email para confirmação.')
+      form.reset()
     }
+    setLoading(false)
   }
 
   return (
@@ -128,7 +111,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={loading || !isReady}
+                disabled={loading}
               >
                 {loading ? 'Registrando...' : 'Registrar'}
               </Button>
