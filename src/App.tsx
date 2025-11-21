@@ -24,10 +24,14 @@ import AdminMessagesPage from './pages/admin/Messages'
 import UnauthorizedPage from './pages/Unauthorized'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { trackPageView } from './lib/analytics'
+import { trackPageView, initAnalytics } from './lib/analytics'
 
 const AnalyticsListener = () => {
   const location = useLocation()
+
+  useEffect(() => {
+    initAnalytics()
+  }, [])
 
   useEffect(() => {
     trackPageView(location.pathname + location.search)

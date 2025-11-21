@@ -23,7 +23,8 @@ export const initAnalytics = () => {
   document.head.appendChild(script)
 
   gtag('js', new Date())
-  gtag('config', GA_MEASUREMENT_ID)
+  // Disable default page view to avoid duplicate with the router listener
+  gtag('config', GA_MEASUREMENT_ID, { send_page_view: false })
 }
 
 export const trackPageView = (path: string) => {
