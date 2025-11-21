@@ -23,6 +23,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { DiscAlbum } from 'lucide-react'
+import { useRecaptcha } from '@/hooks/useRecaptcha'
+import { verifyRecaptcha } from '@/services/recaptcha'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -34,6 +36,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const { executeRecaptcha, isReady } = useRecaptcha()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,16 +45,28 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword(data)
-    if (error) {
-      toast.error(
-        error.message || 'Falha no login. Verifique suas credenciais.',
-      )
-    } else {
-      toast.success('Login realizado com sucesso!')
-      navigate('/')
+    try {
+      const token = await executeRecaptcha('login')
+      await verifyRecaptcha(token, 'login')
+
+      const { error } = await supabase.auth.signInWithPassword(data)
+      if (error) {
+        toast.error(
+          error.message || 'Falha no login. Verifique suas credenciais.',
+        )
+      } else {
+        toast.success('Login realizado com sucesso!')
+        navigate('/')
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Falha ao validar o reCAPTCHA. Tente novamente.'
+      toast.error(message)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -112,7 +127,11 @@ export default function LoginPage() {
                   Esqueceu sua senha?
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || !isReady}
+              >
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>

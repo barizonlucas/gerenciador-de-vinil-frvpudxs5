@@ -22,10 +22,24 @@ import AdminDashboardPage from './pages/admin/Index'
 import AdminPollsPage from './pages/admin/Polls'
 import AdminMessagesPage from './pages/admin/Messages'
 import UnauthorizedPage from './pages/Unauthorized'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { trackPageView } from './lib/analytics'
+
+const AnalyticsListener = () => {
+  const location = useLocation()
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search)
+  }, [location])
+
+  return null
+}
 
 export default function App() {
   return (
     <BrowserRouter>
+      <AnalyticsListener />
       <AuthProvider>
         <ThemeProvider>
           <TooltipProvider>
