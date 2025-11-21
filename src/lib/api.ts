@@ -1,6 +1,7 @@
 // src/lib/api.ts
 // Garantimos um fallback para o domínio de funções do Supabase para evitar rota undefined em prod.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const apiBaseFromEnv = import.meta.env.VITE_API_BASE_URL
 
 const stripTrailingSlash = (value?: string) =>
