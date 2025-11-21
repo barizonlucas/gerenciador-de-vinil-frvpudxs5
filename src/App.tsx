@@ -25,6 +25,7 @@ import UnauthorizedPage from './pages/Unauthorized'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { trackPageView, initAnalytics } from './lib/analytics'
+import { GoogleTagManager } from './components/GoogleTagManager'
 
 const AnalyticsListener = () => {
   const location = useLocation()
@@ -43,6 +44,7 @@ const AnalyticsListener = () => {
 export default function App() {
   return (
     <BrowserRouter>
+      <GoogleTagManager />
       <AnalyticsListener />
       <AuthProvider>
         <ThemeProvider>
