@@ -108,11 +108,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Registrando...' : 'Registrar'}
               </Button>
             </form>
