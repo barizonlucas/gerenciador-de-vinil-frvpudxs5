@@ -32,6 +32,11 @@ npm install
 - Edge Functions do Supabase: configure o secret `RECAPTCHA_SECRET_KEY` com a chave secreta do reCAPTCHA (ex.: `supabase secrets set --project-ref <ref> RECAPTCHA_SECRET_KEY=...`).
 - O score mínimo default é 0.4; ajuste enviando `threshold` no body da função ou alterando em `supabase/functions/verify-recaptcha/index.ts`.
 
+## 📈 Google Analytics (GA4)
+
+- Configure `VITE_GA_MEASUREMENT_ID` no `.env.local` (ex.: `G-CGLMSENJWW`).
+- O carregamento do GA ocorre em `src/lib/analytics.ts`, iniciado em `src/main.tsx`.
+
 ## 💻 Scripts Disponíveis
 
 ### Desenvolvimento
