@@ -17,7 +17,19 @@ interface AuthContextType {
   session: Session | null
   profile: Profile | null
   loading: boolean
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: AuthError | null }>
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
+  sendPasswordResetEmail: (
+    email: string,
+  ) => Promise<{ error: AuthError | null }>
+  updatePassword: (password: string) => Promise<{ error: AuthError | null }>
   refreshProfile: () => Promise<void>
 }
 
@@ -41,34 +53,79 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    setLoading(true)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await refreshProfile()
+    let mounted = true
+
+    const initSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            await refreshProfile()
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
-      setLoading(false)
-    })
+    }
+
+    initSession()
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        refreshProfile()
-      } else {
-        setProfile(null)
-      }
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (mounted) {
+        setSession(session)
+        setUser(session?.user ?? null)
 
-      if (_event === 'PASSWORD_RECOVERY') {
-        navigate('/update-password')
+        if (session?.user) {
+          // We call refreshProfile but don't await it to avoid blocking updates
+          refreshProfile()
+        } else {
+          setProfile(null)
+        }
+
+        if (event === 'PASSWORD_RECOVERY') {
+          navigate('/update-password')
+        } else if (event === 'SIGNED_OUT') {
+          // Optional: explicit redirect, though ProtectedRoute handles it usually
+          setProfile(null)
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [navigate, refreshProfile])
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    return { error }
+  }
+
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    })
+    return { error }
+  }
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
@@ -79,12 +136,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
+  const sendPasswordResetEmail = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/update-password`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    })
+    return { error }
+  }
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error }
+  }
+
   const value = {
     user,
     session,
     profile,
     loading,
+    signIn,
+    signUp,
     signOut,
+    sendPasswordResetEmail,
+    updatePassword,
     refreshProfile,
   }
 

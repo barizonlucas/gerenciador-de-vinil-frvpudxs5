@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { DiscAlbum } from 'lucide-react'
+import { DiscAlbum, Loader2 } from 'lucide-react'
 
 const updatePasswordSchema = z.object({
   password: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
@@ -32,7 +32,8 @@ type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>
 
 export default function UpdatePasswordPage() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const { updatePassword } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<UpdatePasswordFormValues>({
     resolver: zodResolver(updatePasswordSchema),
@@ -40,18 +41,16 @@ export default function UpdatePasswordPage() {
   })
 
   const onSubmit = async (data: UpdatePasswordFormValues) => {
-    setLoading(true)
-    const { error } = await supabase.auth.updateUser({
-      password: data.password,
-    })
+    setIsSubmitting(true)
+    const { error } = await updatePassword(data.password)
 
     if (error) {
       toast.error(error.message || 'Falha ao atualizar a senha.')
+      setIsSubmitting(false)
     } else {
       toast.success('Senha atualizada com sucesso!')
       navigate('/')
     }
-    setLoading(false)
   }
 
   return (
@@ -85,8 +84,15 @@ export default function UpdatePasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Salvando...' : 'Salvar Nova Senha'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Nova Senha'
+                )}
               </Button>
             </form>
           </Form>

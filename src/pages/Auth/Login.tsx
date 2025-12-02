@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { DiscAlbum } from 'lucide-react'
+import { DiscAlbum, Loader2 } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -33,7 +33,8 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const { signIn } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -41,17 +42,19 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginFormValues) => {
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword(data)
+    setIsSubmitting(true)
+    const { error } = await signIn(data.email, data.password)
     if (error) {
       toast.error(
         error.message || 'Falha no login. Verifique suas credenciais.',
       )
+      setIsSubmitting(false)
     } else {
       toast.success('Login realizado com sucesso!')
+      // Redirect is usually handled by PublicRoute/AuthContext listener
+      // but explicit navigation provides immediate feedback if needed
       navigate('/')
     }
-    setLoading(false)
   }
 
   return (
@@ -112,8 +115,15 @@ export default function LoginPage() {
                   Esqueceu sua senha?
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Entrando...' : 'Entrar'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  'Entrar'
+                )}
               </Button>
             </form>
           </Form>

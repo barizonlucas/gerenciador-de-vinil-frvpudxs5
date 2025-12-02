@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Link } from 'react-router-dom'
-import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { DiscAlbum } from 'lucide-react'
+import { DiscAlbum, Loader2 } from 'lucide-react'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -31,7 +31,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
-  const [loading, setLoading] = useState(false)
+  const { sendPasswordResetEmail } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -39,10 +40,8 @@ export default function ForgotPasswordPage() {
   })
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
-    setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: `${window.location.origin}/update-password`,
-    })
+    setIsSubmitting(true)
+    const { error } = await sendPasswordResetEmail(data.email)
 
     if (error) {
       toast.error(error.message || 'Falha ao enviar email de recuperação.')
@@ -52,7 +51,7 @@ export default function ForgotPasswordPage() {
       )
       form.reset()
     }
-    setLoading(false)
+    setIsSubmitting(false)
   }
 
   return (
@@ -88,8 +87,15 @@ export default function ForgotPasswordPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Link'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar Link'
+                )}
               </Button>
             </form>
           </Form>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Link } from 'react-router-dom'
-import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { DiscAlbum } from 'lucide-react'
+import { DiscAlbum, Loader2 } from 'lucide-react'
 
 const registerSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -32,7 +32,8 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false)
+  const { signUp } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -40,14 +41,8 @@ export default function RegisterPage() {
   })
 
   const onSubmit = async (data: RegisterFormValues) => {
-    setLoading(true)
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    })
+    setIsSubmitting(true)
+    const { error } = await signUp(data.email, data.password)
 
     if (error) {
       toast.error(error.message || 'Falha no registro.')
@@ -55,7 +50,7 @@ export default function RegisterPage() {
       toast.success('Registro realizado! Verifique seu email para confirmação.')
       form.reset()
     }
-    setLoading(false)
+    setIsSubmitting(false)
   }
 
   return (
@@ -108,8 +103,15 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Registrando...' : 'Registrar'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registrando...
+                  </>
+                ) : (
+                  'Registrar'
+                )}
               </Button>
             </form>
           </Form>
