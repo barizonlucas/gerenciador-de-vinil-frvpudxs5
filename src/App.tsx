@@ -19,6 +19,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { AdminRoute } from './components/admin/AdminRoute'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminDashboardPage from './pages/admin/Index'
+import AdminAnalyticsPage from './pages/admin/Analytics'
 import AdminPollsPage from './pages/admin/Polls'
 import AdminMessagesPage from './pages/admin/Messages'
 import UnauthorizedPage from './pages/Unauthorized'
@@ -63,6 +64,7 @@ export default function App() {
                 <Route element={<AdminRoute />}>
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboardPage />} />
+                    <Route path="analytics" element={<AdminAnalyticsPage />} />
                     <Route path="polls" element={<AdminPollsPage />} />
                     <Route path="messages" element={<AdminMessagesPage />} />
                   </Route>

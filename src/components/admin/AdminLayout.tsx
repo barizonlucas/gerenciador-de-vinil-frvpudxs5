@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, BarChart2, MessageSquare, Users } from 'lucide-react'
+import { Home, BarChart2, MessageSquare, Users, LineChart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const AdminLayout = () => {
@@ -24,6 +24,10 @@ const AdminLayout = () => {
               <NavLink to="/admin" end className={navLinkClass}>
                 <BarChart2 className="h-4 w-4" />
                 Dashboard
+              </NavLink>
+              <NavLink to="/admin/analytics" className={navLinkClass}>
+                <LineChart className="h-4 w-4" />
+                Analytics
               </NavLink>
               <NavLink to="/admin/polls" className={navLinkClass}>
                 <Users className="h-4 w-4" />
